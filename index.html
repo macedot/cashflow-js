@@ -316,6 +316,10 @@
           formError.frequency = '';
           let valid = true;
 
+          if (!formEvent.name.trim()) {
+            formError.name = 'Name is required';
+            valid = false;
+          }
           if (!formEvent.startDate) {
             formError.startDate = 'Start date is required';
             valid = false;

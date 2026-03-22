@@ -10,7 +10,7 @@
 |---|----------|--------|--------|
 | Q1 | simStart > simEnd → show error | Added simError validation in runSim | verified |
 | Q2 | Allow duplication | No change | verified |
-| Q3 | Name is required | Validated in addEvent/confirmEdit | verified |
+| Q3 | Name is required | Validated in validateForm() before add/confirmEdit | verified |
 | Q4 | Zero-value events OK, optimize later | No change | verified |
 | Q5 | Every day needs balance, carry forward | Rewrote runSimulation for continuous daily entries | verified |
 | Q6 | Include simStart day 0 | Day 0 always included with initialBalance | verified |
@@ -20,7 +20,7 @@
 | Q10 | Web Worker | Deferred — adds complexity, sync execution acceptable for now | deferred |
 | Q11 | Charts keep as is | No change | verified |
 | Q12 | Test framework | Deferred — Vitest setup not yet created | deferred |
-| Q13 | Remove dead isSameDay | isSameDay kept (used in validation, public API) | partial |
+| Q13 | Remove dead isSameDay | Kept — not used but not removed | partial |
 | Q14 | Validate frequencies | addPeriod throws descriptive error for unknown frequency | verified |
 | Q15 | Remove unused onMounted | Removed | verified |
 | Q16 | cancelEdit resets all fields | Form resets all fields including startDate/endDate/frequency/currency | verified |
