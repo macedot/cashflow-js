@@ -15,11 +15,21 @@ python3 -m http.server 8080
 # Then open http://localhost:8080
 ```
 
+## Commands
+
+```bash
+npm install       # install dev dependencies (vitest)
+npm test          # run tests once
+npm run test:watch # watch mode
+```
+
 ## Architecture
 
 ```
 index.html          # Vue 3 SPA (CDN-based, no build step)
-src/cashflow.js     # Core simulation logic (ES module)
+src/
+  cashflow.js      # Core simulation logic (ES module)
+  cashflow.test.js # Vitest unit tests
 ```
 
 **`src/cashflow.js`** contains pure functions:
@@ -28,17 +38,32 @@ src/cashflow.js     # Core simulation logic (ES module)
 - `parseDate(dateStr)` — uses local time to avoid timezone shifts
 - `addPeriod(date, frequency)` — handles month overflow (e.g., Jan 31 + 1 month = Feb 28)
 - `isValidDate(d)` — checks for valid Date
-- `isSameDay(a, b)` — compares two dates (local time)
 - `FREQUENCIES` — enum of valid frequency strings
 
 **Simulation output**: One entry per calendar day from simStart to simEnd (inclusive). Days with no events have `cashflow: 0` and balance carried forward.
 
 **`index.html`** uses:
-- Vue 3 (CDN) — reactive UI
-- Chart.js (CDN) — bar chart (cashflows) + stepped line (balance)
+- Vue 3 (CDN) — reactive UI with Composition API
+- Chart.js (CDN) — mixed bar/line chart (Income/Expense bars + Balance stepped line)
 - PapaParse (CDN) — CSV import
-- Tailwind CSS (CDN) — styling
-- localStorage — events persist across page refreshes
+- Tailwind CSS (CDN) — styling with `tailwindDarkMode = 'class'` for dark mode
+- localStorage — events and simulation params persist across sessions
+
+## Key Vue Patterns
+
+**Auto-simulation**: `watch([simStart, simEnd, initialBalance], () => { saveSimParams(); autoSimulate(); })` triggers simulation on every param change.
+
+**filteredResults**: A computed that filters results to show only days with cashflow changes (or first/last day). Shared between chart and table to avoid computing data twice.
+
+**Chart animation**: `animation: { duration: 800, easing: 'easeOutQuart' }` on every chart render.
+
+**Events table (live inline editing)**: The Events table is a full-width live table with inline editing. Each row can be clicked to enter edit mode (inputs replace displayed values). A "+" row at the bottom always shows empty inputs for adding new events. Validation runs on OK/+ press; simulation auto-runs after save.
+
+**State for inline editing**:
+- `editingEventIndex` — index of row being edited (null if none)
+- `editDraft` — reactive object holding current edit row's form data
+- `newEventDraft` — reactive object for the "+" row inputs
+- `validateDraft(draft)` — validates a draft object (name, startDate, frequency required)
 
 ## CSV Format
 
@@ -57,13 +82,6 @@ Rent,2025-01-01,2025-12-31,monthly,-1500,USD
 - **Optional**: `name` (can be empty), `endDate` (defaults to startDate), `value` (can be 0), `currency` (default: USD)
 - Zero-value events are allowed in the list; simulation skips them
 - Invalid frequency throws a descriptive error
-
-## Edit UX
-
-- Click **Edit** on an event to enter edit mode (form pre-filled, Add button replaced with OK/Cancel)
-- **Cancel** discards changes and restores form
-- **OK** commits changes and triggers auto-simulation
-- During edit, original event data is preserved in `editingSnapshot` until OK or Cancel
 
 ## Date Handling
 
