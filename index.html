@@ -142,10 +142,12 @@
                       <div class="flex items-center gap-1">
                         <input type="date" v-model="editDraft.startDate"
                           class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                          :class="formError.startDate ? 'border-red-500' : ''">
+                          :class="formError.startDate ? 'border-red-500' : ''"
+                          @keyup.enter="saveEditEvent">
                         <span class="text-gray-400">-</span>
                         <input type="date" v-model="editDraft.endDate"
-                          class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                          class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                          @keyup.enter="saveEditEvent">
                       </div>
                       <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
                     </td>
@@ -167,9 +169,11 @@
                     <td class="px-1 py-1">
                       <div class="flex items-center justify-end gap-1">
                         <input type="number" v-model.number="editDraft.value" step="0.01"
-                          class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                          class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                          @keyup.enter="saveEditEvent">
                         <select v-model="editDraft.currency"
-                          class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                          class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                          @keyup.enter="saveEditEvent">
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
                           <option value="GBP">GBP</option>
@@ -196,10 +200,12 @@
                     <div class="flex items-center gap-1">
                       <input type="date" v-model="newEventDraft.startDate"
                         class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        :class="formError.startDate ? 'border-red-500' : ''">
+                        :class="formError.startDate ? 'border-red-500' : ''"
+                        @keyup.enter="saveNewEvent">
                       <span class="text-gray-400">-</span>
                       <input type="date" v-model="newEventDraft.endDate"
-                        class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                        class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        @keyup.enter="saveNewEvent">
                     </div>
                     <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
                   </td>
@@ -222,9 +228,11 @@
                     <div class="flex items-center justify-end gap-1">
                       <input type="number" v-model.number="newEventDraft.value" step="0.01"
                         class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        placeholder="0.00">
+                        placeholder="0.00"
+                        @keyup.enter="saveNewEvent">
                       <select v-model="newEventDraft.currency"
-                        class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                        class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        @keyup.enter="saveNewEvent">
                         <option value="USD">USD</option>
                         <option value="EUR">EUR</option>
                         <option value="GBP">GBP</option>
