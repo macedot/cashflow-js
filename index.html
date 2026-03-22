@@ -90,7 +90,7 @@
                 <input type="file" accept=".csv" @change="importCSV" class="hidden">
               </label>
               <button v-if="events.length > 0" @click="exportEventsCSV"
-                class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700">
                 Export CSV
               </button>
             </div>
@@ -184,9 +184,9 @@
                     </td>
                     <td class="px-1 py-1 text-center">
                       <button @click="saveEditEvent"
-                        class="text-green-600 hover:text-green-800 text-xs px-1">OK</button>
+                        class="text-green-600 hover:text-green-800 text-xs px-1 dark:text-green-400 dark:hover:text-green-300">OK</button>
                       <button @click="cancelEditEvent"
-                        class="text-gray-500 hover:text-gray-700 text-xs px-1">X</button>
+                        class="text-gray-500 hover:text-gray-700 text-xs px-1 dark:text-gray-400 dark:hover:text-gray-300">X</button>
                     </td>
                   </template>
                 </tr>
@@ -239,7 +239,7 @@
                   </td>
                   <td class="px-1 py-1 text-center">
                     <button @click="saveNewEvent"
-                      class="text-green-600 hover:text-green-800 font-bold text-lg" title="Add event">+</button>
+                      class="text-green-600 hover:text-green-800 font-bold text-lg dark:text-green-400 dark:hover:text-green-300" title="Add event">+</button>
                   </td>
                 </tr>
               </tbody>
@@ -254,7 +254,7 @@
         <div class="flex justify-between items-center mb-3">
           <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Cashflow & Balance Over Time</h2>
           <button @click="exportResultsCSV"
-            class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+            class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700">
             Export CSV
           </button>
         </div>
@@ -367,10 +367,23 @@
         loadSimParams();
 
         // Theme
-        const darkMode = ref(false);
+        const darkMode = ref(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (darkMode.value) {
+          document.documentElement.classList.add('dark');
+        }
+        let userToggled = false;
         function toggleTheme() {
+          userToggled = true;
           darkMode.value = !darkMode.value;
           document.documentElement.classList.toggle('dark', darkMode.value);
+        }
+        if (window.matchMedia) {
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (!userToggled) {
+              darkMode.value = e.matches;
+              document.documentElement.classList.toggle('dark', e.matches);
+            }
+          });
         }
 
         // Results collapse
