@@ -744,6 +744,7 @@
                   stepped: 'before',
                   tension: 0,
                   pointRadius: 0,
+                  order: 1,
                 },
               ],
             },
@@ -764,7 +765,8 @@
               x: {
                 ticks: { maxRotation: 45, minRotation: 45, color: textColor },
                 grid: { color: gridColor },
-                offset: true,
+                categoryPercentage: 0.5,
+                barPercentage: 0.5,
               },
               y: { beginAtZero: false, ticks: { color: textColor }, grid: { color: gridColor } },
             };
