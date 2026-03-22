@@ -62,86 +62,8 @@
         </div>
       </div>
 
-      <!-- Row 2: Add Event + Event List -->
-      <div class="grid md:grid-cols-2 gap-6 mb-4">
-        <!-- Add Event Form -->
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <h2 class="text-lg font-semibold mb-3 text-gray-700 dark:text-gray-200">
-            {{ isEditing() ? 'Edit Event' : 'Add Event' }}
-          </h2>
-          <div class="space-y-3">
-            <div>
-              <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Name</label>
-              <input type="text" v-model="formEvent.name" placeholder="e.g., Salary, Rent"
-                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-              <p v-if="formError.name" class="error-msg">{{ formError.name }}</p>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Start Date *</label>
-                <input type="date" v-model="formEvent.startDate"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                <p v-if="formError.startDate" class="error-msg">{{ formError.startDate }}</p>
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">End Date</label>
-                <input type="date" v-model="formEvent.endDate"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-              </div>
-            </div>
-            <div class="grid grid-cols-3 gap-3">
-              <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Frequency *</label>
-                <select v-model="formEvent.frequency"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                  <option value="">Select...</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="monthly">Monthly</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="semi-annual">Semi-annual</option>
-                  <option value="annual">Annual</option>
-                </select>
-                <p v-if="formError.frequency" class="error-msg">{{ formError.frequency }}</p>
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Amount</label>
-                <input type="number" v-model.number="formEvent.value" step="0.01"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                  placeholder="Negative for expense">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Currency</label>
-                <select v-model="formEvent.currency"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                  <option value="USD">USD</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                  <option value="BRL">BRL</option>
-                </select>
-              </div>
-            </div>
-            <p class="text-xs text-gray-400 dark:text-gray-400">* Required: Start Date and Frequency</p>
-            <div class="flex gap-2">
-              <button v-if="!isEditing()" @click="addEvent"
-                class="flex-1 bg-green-600 text-white rounded py-3 px-4 hover:bg-green-700 transition">
-                Add Event
-              </button>
-              <template v-else>
-                <button @click="confirmEdit"
-                  class="flex-1 bg-blue-600 text-white rounded py-3 px-4 hover:bg-blue-700 transition">
-                  OK
-                </button>
-                <button @click="cancelEdit"
-                  class="flex-1 bg-gray-500 text-white rounded py-3 px-4 hover:bg-gray-600 transition">
-                  Cancel
-                </button>
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <!-- Event List -->
+      <!-- Events Table (full width, live inline editing) -->
+      <div class="mb-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <div class="flex justify-between items-center mb-3">
             <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Events ({{ events.length }})</h2>
@@ -149,21 +71,18 @@
               <button v-if="events.length > 0" @click="clearEvents"
                 class="text-sm text-red-500 hover:text-red-700 dark:text-red-400">Clear All</button>
               <label class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer">
-                Import Events
+                Import CSV
                 <input type="file" accept=".csv" @change="importCSV" class="hidden">
               </label>
               <button v-if="events.length > 0" @click="exportEventsCSV"
                 class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
-                Export Events
+                Export CSV
               </button>
             </div>
           </div>
           <p v-if="csvError" class="error-msg mb-2">{{ csvError }}</p>
           <p v-if="csvSuccess" class="text-green-600 text-sm mb-2">{{ csvSuccess }}</p>
-          <div v-if="events.length === 0" class="text-gray-400 dark:text-gray-400 text-center py-4">
-            No events added yet
-          </div>
-          <div v-else class="overflow-x-auto max-h-64 overflow-y-auto">
+          <div class="overflow-x-auto max-h-64 overflow-y-auto">
             <table class="w-full text-xs">
               <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
                 <tr>
@@ -171,30 +90,147 @@
                   <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Period</th>
                   <th class="px-2 py-1 text-right text-gray-700 dark:text-gray-200">Value</th>
                   <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Freq</th>
-                  <th class="px-2 py-1 text-center text-gray-700 dark:text-gray-200">Actions</th>
+                  <th class="px-2 py-1 text-center text-gray-700 dark:text-gray-200">Remove?</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(event, index) in events" :key="index" class="border-t bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                  <td class="px-2 py-1 font-medium text-gray-700 dark:text-gray-200">{{ event.name || '(unnamed)' }}</td>
-                  <td class="px-2 py-1 text-gray-500 dark:text-gray-400">
-                    {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
+                <!-- Existing events: display mode -->
+                <tr v-for="(event, index) in events" :key="index"
+                  class="border-t bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                  :class="{ 'bg-blue-50 dark:bg-blue-900': editingEventIndex === index }">
+                  <!-- Display row -->
+                  <template v-if="editingEventIndex !== index">
+                    <td class="px-2 py-1 font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        @click="startEditEvent(index)">{{ event.name || '(unnamed)' }}</td>
+                    <td class="px-2 py-1 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        @click="startEditEvent(index)">
+                      {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
+                    </td>
+                    <td class="px-2 py-1 text-right cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        :class="event.value >= 0 ? 'text-green-600' : 'text-red-600'"
+                        @click="startEditEvent(index)">
+                      {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
+                      <span v-if="event.currency && event.currency !== 'USD'" class="text-xs text-gray-400">{{ event.currency }}</span>
+                    </td>
+                    <td class="px-2 py-1 text-gray-400 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        @click="startEditEvent(index)">{{ event.frequency }}</td>
+                    <td class="px-2 py-1 text-center">
+                      <button @click="removeEvent(index)"
+                        class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs px-1">X</button>
+                    </td>
+                  </template>
+                  <!-- Edit row -->
+                  <template v-else>
+                    <td class="px-1 py-1">
+                      <input type="text" v-model="editDraft.name"
+                        class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        :class="formError.name ? 'border-red-500' : ''"
+                        @keyup.enter="saveEditEvent">
+                      <p v-if="formError.name" class="error-msg text-xs">{{ formError.name }}</p>
+                    </td>
+                    <td class="px-1 py-1">
+                      <div class="flex items-center gap-1">
+                        <input type="date" v-model="editDraft.startDate"
+                          class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                          :class="formError.startDate ? 'border-red-500' : ''">
+                        <span class="text-gray-400">-</span>
+                        <input type="date" v-model="editDraft.endDate"
+                          class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                      </div>
+                      <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
+                    </td>
+                    <td class="px-1 py-1">
+                      <div class="flex items-center justify-end gap-1">
+                        <input type="number" v-model.number="editDraft.value" step="0.01"
+                          class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                        <select v-model="editDraft.currency"
+                          class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="GBP">GBP</option>
+                          <option value="BRL">BRL</option>
+                        </select>
+                      </div>
+                    </td>
+                    <td class="px-1 py-1">
+                      <select v-model="editDraft.frequency"
+                        class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        :class="formError.frequency ? 'border-red-500' : ''"
+                        @keyup.enter="saveEditEvent">
+                        <option value="">Select...</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="quarterly">Quarterly</option>
+                        <option value="semi-annual">Semi-annual</option>
+                        <option value="annual">Annual</option>
+                      </select>
+                      <p v-if="formError.frequency" class="error-msg text-xs">{{ formError.frequency }}</p>
+                    </td>
+                    <td class="px-1 py-1 text-center">
+                      <button @click="saveEditEvent"
+                        class="text-green-600 hover:text-green-800 text-xs px-1">OK</button>
+                      <button @click="cancelEditEvent"
+                        class="text-gray-500 hover:text-gray-700 text-xs px-1">X</button>
+                    </td>
+                  </template>
+                </tr>
+                <!-- New event row (+) -->
+                <tr class="border-t-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
+                  <td class="px-1 py-1">
+                    <input type="text" v-model="newEventDraft.name" placeholder="Event name"
+                      class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                      @keyup.enter="saveNewEvent">
                   </td>
-                  <td class="px-2 py-1 text-right" :class="event.value >= 0 ? 'text-green-600' : 'text-red-600'">
-                    {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
-                    <span v-if="event.currency && event.currency !== 'USD'" class="text-xs text-gray-400">{{ event.currency }}</span>
+                  <td class="px-1 py-1">
+                    <div class="flex items-center gap-1">
+                      <input type="date" v-model="newEventDraft.startDate"
+                        class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        :class="formError.startDate ? 'border-red-500' : ''">
+                      <span class="text-gray-400">-</span>
+                      <input type="date" v-model="newEventDraft.endDate"
+                        class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                    </div>
+                    <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
                   </td>
-                  <td class="px-2 py-1 text-gray-400 dark:text-gray-400">{{ event.frequency }}</td>
-                  <td class="px-2 py-1 text-center">
-                    <button @click="editEvent(index)"
-                      class="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-xs px-1">Edit</button>
-                    <button @click="removeEvent(index)"
-                      class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs px-1">X</button>
+                  <td class="px-1 py-1">
+                    <div class="flex items-center justify-end gap-1">
+                      <input type="number" v-model.number="newEventDraft.value" step="0.01"
+                        class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        placeholder="0.00">
+                      <select v-model="newEventDraft.currency"
+                        class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="BRL">BRL</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td class="px-1 py-1">
+                    <select v-model="newEventDraft.frequency"
+                      class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                      :class="formError.frequency ? 'border-red-500' : ''"
+                      @keyup.enter="saveNewEvent">
+                      <option value="">Select...</option>
+                      <option value="daily">Daily</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="monthly">Monthly</option>
+                      <option value="quarterly">Quarterly</option>
+                      <option value="semi-annual">Semi-annual</option>
+                      <option value="annual">Annual</option>
+                    </select>
+                    <p v-if="formError.frequency" class="error-msg text-xs">{{ formError.frequency }}</p>
+                  </td>
+                  <td class="px-1 py-1 text-center">
+                    <button @click="saveNewEvent"
+                      class="text-green-600 hover:text-green-800 font-bold text-lg" title="Add event">+</button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <p class="text-xs text-gray-400 dark:text-gray-400 mt-2">* Required: Start Date and Frequency. Click a row to edit.</p>
         </div>
       </div>
 
@@ -326,18 +362,11 @@
           resultsCollapsed.value = !resultsCollapsed.value;
         }
 
-        // Events
+        // Events — live table with inline editing
         const events = ref(loadFromStorage() || []);
-        const formEvent = reactive({
-          name: '',
-          startDate: '2025-01-01',
-          endDate: '2025-12-31',
-          frequency: '',
-          value: 0,
-          currency: 'USD',
-        });
-        const editingIndex = ref(null);
-        const editingSnapshot = ref(null); // preserves original during edit
+        const editingEventIndex = ref(null); // which row is being edited
+        const editDraft = reactive({ name: '', startDate: '', endDate: '', frequency: '', value: 0, currency: 'USD' });
+        const newEventDraft = reactive({ name: '', startDate: '2025-01-01', endDate: '2025-12-31', frequency: '', value: 0, currency: 'USD' });
         const formError = reactive({ name: '', startDate: '', frequency: '' });
 
         // Results
@@ -380,28 +409,6 @@
           } catch {}
         }
 
-        // --- Validation ---
-        function validateForm() {
-          formError.name = '';
-          formError.startDate = '';
-          formError.frequency = '';
-          let valid = true;
-
-          if (!formEvent.name.trim()) {
-            formError.name = 'Name is required';
-            valid = false;
-          }
-          if (!formEvent.startDate) {
-            formError.startDate = 'Start date is required';
-            valid = false;
-          }
-          if (!formEvent.frequency) {
-            formError.frequency = 'Frequency is required';
-            valid = false;
-          }
-          return valid;
-        }
-
         function validateSimDates() {
           simError.value = '';
           if (simEnd.value && simStart.value && simEnd.value < simStart.value) {
@@ -415,77 +422,98 @@
           return true;
         }
 
-        // --- Event methods ---
-        function addEvent() {
-          if (!validateForm()) return;
+        // --- Event methods (inline editing) ---
+        function validateDraft(draft) {
+          formError.name = '';
+          formError.startDate = '';
+          formError.frequency = '';
+          let valid = true;
 
-          events.value.push({
-            name: formEvent.name.trim(),
-            startDate: formEvent.startDate,
-            endDate: formEvent.endDate || formEvent.startDate,
-            frequency: formEvent.frequency,
-            value: parseFloat(formEvent.value) || 0,
-            currency: formEvent.currency || 'USD',
-          });
-          saveToStorage();
-          resetForm();
-          autoSimulate();
-        }
-
-        function editEvent(index) {
-          const event = events.value[index];
-          editingSnapshot.value = { ...event }; // preserve original
-          editingIndex.value = index;
-          formEvent.name = event.name || '';
-          formEvent.startDate = event.startDate || '';
-          formEvent.endDate = event.endDate || '';
-          formEvent.frequency = event.frequency || '';
-          formEvent.value = event.value || 0;
-          formEvent.currency = event.currency || 'USD';
-        }
-
-        function confirmEdit() {
-          if (!validateForm()) return;
-
-          if (editingIndex.value !== null) {
-            events.value[editingIndex.value] = {
-              name: formEvent.name.trim(),
-              startDate: formEvent.startDate,
-              endDate: formEvent.endDate || formEvent.startDate,
-              frequency: formEvent.frequency,
-              value: parseFloat(formEvent.value) || 0,
-              currency: formEvent.currency || 'USD',
-            };
-            saveToStorage();
+          if (!draft.name.trim()) {
+            formError.name = 'Name is required';
+            valid = false;
           }
-          cancelEdit();
-          autoSimulate();
+          if (!draft.startDate) {
+            formError.startDate = 'Start date is required';
+            valid = false;
+          }
+          if (!draft.frequency) {
+            formError.frequency = 'Frequency is required';
+            valid = false;
+          }
+          return valid;
         }
 
-        function cancelEdit() {
-          editingIndex.value = null;
-          editingSnapshot.value = null;
-          resetForm();
-        }
-
-        function resetForm() {
-          formEvent.name = '';
-          formEvent.startDate = '2025-01-01';
-          formEvent.endDate = '2025-12-31';
-          formEvent.frequency = '';
-          formEvent.value = 0;
-          formEvent.currency = 'USD';
+        function startEditEvent(index) {
+          const event = events.value[index];
+          editingEventIndex.value = index;
+          editDraft.name = event.name || '';
+          editDraft.startDate = event.startDate || '';
+          editDraft.endDate = event.endDate || '';
+          editDraft.frequency = event.frequency || '';
+          editDraft.value = event.value || 0;
+          editDraft.currency = event.currency || 'USD';
           formError.name = '';
           formError.startDate = '';
           formError.frequency = '';
         }
 
+        function saveEditEvent() {
+          if (!validateDraft(editDraft)) return;
+
+          if (editingEventIndex.value !== null) {
+            events.value[editingEventIndex.value] = {
+              name: editDraft.name.trim(),
+              startDate: editDraft.startDate,
+              endDate: editDraft.endDate || editDraft.startDate,
+              frequency: editDraft.frequency,
+              value: parseFloat(editDraft.value) || 0,
+              currency: editDraft.currency || 'USD',
+            };
+            saveToStorage();
+          }
+          cancelEditEvent();
+          autoSimulate();
+        }
+
+        function cancelEditEvent() {
+          editingEventIndex.value = null;
+          formError.name = '';
+          formError.startDate = '';
+          formError.frequency = '';
+        }
+
+        function saveNewEvent() {
+          if (!validateDraft(newEventDraft)) return;
+
+          events.value.push({
+            name: newEventDraft.name.trim(),
+            startDate: newEventDraft.startDate,
+            endDate: newEventDraft.endDate || newEventDraft.startDate,
+            frequency: newEventDraft.frequency,
+            value: parseFloat(newEventDraft.value) || 0,
+            currency: newEventDraft.currency || 'USD',
+          });
+          saveToStorage();
+          // Reset new event draft
+          newEventDraft.name = '';
+          newEventDraft.startDate = '2025-01-01';
+          newEventDraft.endDate = '2025-12-31';
+          newEventDraft.frequency = '';
+          newEventDraft.value = 0;
+          newEventDraft.currency = 'USD';
+          formError.name = '';
+          formError.startDate = '';
+          formError.frequency = '';
+          autoSimulate();
+        }
+
         function removeEvent(index) {
           events.value.splice(index, 1);
-          if (editingIndex.value === index) {
-            cancelEdit();
-          } else if (editingIndex.value !== null && editingIndex.value > index) {
-            editingIndex.value--;
+          if (editingEventIndex.value === index) {
+            cancelEditEvent();
+          } else if (editingEventIndex.value !== null && editingEventIndex.value > index) {
+            editingEventIndex.value--;
           }
           saveToStorage();
           autoSimulate();
@@ -710,17 +738,15 @@
           return `${y}-${m}-${day}`;
         }
 
-        const isEditing = () => editingIndex.value !== null;
-
         return {
           simStart, simEnd, initialBalance, simError,
-          events, formEvent, editingIndex, formError,
+          events, editingEventIndex, editDraft, newEventDraft, formError,
           results, hasRunSimulation, filteredResults, chartData,
           csvError, csvSuccess,
           cashflowChart,
-          addEvent, editEvent, confirmEdit, cancelEdit, removeEvent, clearEvents,
+          startEditEvent, saveEditEvent, cancelEditEvent, saveNewEvent, removeEvent, clearEvents,
           importCSV, runSimulation: runSim, exportEventsCSV, exportResultsCSV,
-          formatDate, isEditing,
+          formatDate,
           darkMode, toggleTheme,
           resultsCollapsed, toggleResults,
         };
