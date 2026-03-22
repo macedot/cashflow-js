@@ -274,10 +274,11 @@
 
       <!-- Chart Fullscreen Overlay -->
       <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 m-4">
-        <div class="w-full h-full flex flex-col">
-          <div class="flex justify-end mb-2">
+        <div class="w-full h-full bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col p-4">
+          <div class="flex justify-between items-center mb-3">
+            <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Cashflow & Balance Over Time</h2>
             <button @click="chartFullscreen = false"
-              class="text-gray-700 dark:text-gray-200 text-2xl hover:text-gray-500 dark:hover:text-gray-400">✕</button>
+              class="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100">✕</button>
           </div>
           <div class="flex-1 chart-container">
             <canvas ref="cashflowChartFullscreen"></canvas>
