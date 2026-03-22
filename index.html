@@ -11,9 +11,13 @@
   <style>
     [v-cloak] { display: none; }
     .chart-container { position: relative; height: 300px; }
+    .error-msg { color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
+  <div id="app-load-error" style="display:none; padding:2rem; text-align:center; color:#dc2626;">
+    Failed to load application. Please check your internet connection and refresh.
+  </div>
   <div id="app" v-cloak>
     <!-- Header -->
     <header class="bg-blue-600 text-white p-4 shadow">
@@ -38,6 +42,7 @@
                 <label class="block text-sm text-gray-600 mb-1">End Date</label>
                 <input type="date" v-model="simEnd"
                   class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p v-if="simError" class="error-msg">{{ simError }}</p>
               </div>
               <div class="col-span-2">
                 <label class="block text-sm text-gray-600 mb-1">Initial Balance ($)</label>
@@ -54,55 +59,76 @@
           <!-- Add Event Form -->
           <div class="bg-white rounded-lg shadow p-4">
             <h2 class="text-lg font-semibold mb-3 text-gray-700">
-              {{ editingIndex !== null ? 'Edit Event' : 'Add Event' }}
+              {{ isEditing() ? 'Edit Event' : 'Add Event' }}
             </h2>
             <div class="space-y-3">
               <div>
                 <label class="block text-sm text-gray-600 mb-1">Name</label>
-                <input type="text" v-model="newEvent.name" placeholder="e.g., Salary, Rent"
+                <input type="text" v-model="formEvent.name" placeholder="e.g., Salary, Rent"
                   class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p v-if="formError.name" class="error-msg">{{ formError.name }}</p>
               </div>
               <div class="grid grid-cols-2 gap-3">
                 <div>
-                  <label class="block text-sm text-gray-600 mb-1">Start Date</label>
-                  <input type="date" v-model="newEvent.startDate"
+                  <label class="block text-sm text-gray-600 mb-1">Start Date *</label>
+                  <input type="date" v-model="formEvent.startDate"
                     class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <p v-if="formError.startDate" class="error-msg">{{ formError.startDate }}</p>
                 </div>
                 <div>
                   <label class="block text-sm text-gray-600 mb-1">End Date</label>
-                  <input type="date" v-model="newEvent.endDate"
+                  <input type="date" v-model="formEvent.endDate"
                     class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
               </div>
-              <div class="grid grid-cols-2 gap-3">
+              <div class="grid grid-cols-3 gap-3">
                 <div>
-                  <label class="block text-sm text-gray-600 mb-1">Frequency</label>
-                  <select v-model="newEvent.frequency"
+                  <label class="block text-sm text-gray-600 mb-1">Frequency *</label>
+                  <select v-model="formEvent.frequency"
                     class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="">Select...</option>
                     <option value="daily">Daily</option>
                     <option value="weekly">Weekly</option>
-                    <option value="monthly" selected>Monthly</option>
+                    <option value="monthly">Monthly</option>
                     <option value="quarterly">Quarterly</option>
-                    <option value="semi-annual">Semi-Annual</option>
+                    <option value="semi-annual">Semi-annual</option>
                     <option value="annual">Annual</option>
                   </select>
+                  <p v-if="formError.frequency" class="error-msg">{{ formError.frequency }}</p>
                 </div>
                 <div>
-                  <label class="block text-sm text-gray-600 mb-1">Amount ($)</label>
-                  <input type="number" v-model.number="newEvent.value" step="0.01"
+                  <label class="block text-sm text-gray-600 mb-1">Amount</label>
+                  <input type="number" v-model.number="formEvent.value" step="0.01"
                     class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Negative for expense">
                 </div>
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">Currency</label>
+                  <select v-model="formEvent.currency"
+                    class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="USD">USD</option>
+                    <option value="EUR">EUR</option>
+                    <option value="GBP">GBP</option>
+                    <option value="BRL">BRL</option>
+                  </select>
+                </div>
               </div>
+              <p class="text-xs text-gray-400">* Required: Start Date and Frequency</p>
               <div class="flex gap-2">
-                <button @click="addEvent"
+                <button v-if="!isEditing()" @click="addEvent"
                   class="flex-1 bg-green-600 text-white rounded py-2 px-4 hover:bg-green-700 transition">
-                  {{ editingIndex !== null ? 'Update' : 'Add' }}
+                  Add Event
                 </button>
-                <button v-if="editingIndex !== null" @click="cancelEdit"
-                  class="flex-1 bg-gray-500 text-white rounded py-2 px-4 hover:bg-gray-600 transition">
-                  Cancel
-                </button>
+                <template v-else>
+                  <button @click="confirmEdit"
+                    class="flex-1 bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 transition">
+                    OK
+                  </button>
+                  <button @click="cancelEdit"
+                    class="flex-1 bg-gray-500 text-white rounded py-2 px-4 hover:bg-gray-600 transition">
+                    Cancel
+                  </button>
+                </template>
               </div>
             </div>
           </div>
@@ -110,10 +136,11 @@
           <!-- CSV Import -->
           <div class="bg-white rounded-lg shadow p-4">
             <h2 class="text-lg font-semibold mb-3 text-gray-700">Import CSV</h2>
-            <p class="text-sm text-gray-500 mb-2">Columns: name, startDate, endDate, frequency, value</p>
+            <p class="text-sm text-gray-500 mb-2">Columns: name, startDate, endDate, frequency, value, currency</p>
             <input type="file" accept=".csv" @change="importCSV"
               class="w-full border rounded px-3 py-2 focus:outline-none">
-            <p v-if="csvError" class="text-red-500 text-sm mt-2">{{ csvError }}</p>
+            <p v-if="csvError" class="error-msg mt-2">{{ csvError }}</p>
+            <p v-if="csvSuccess" class="text-green-600 text-sm mt-2">{{ csvSuccess }}</p>
           </div>
 
           <!-- Event List -->
@@ -130,7 +157,7 @@
               <div v-for="(event, index) in events" :key="index"
                 class="flex justify-between items-center p-2 bg-gray-50 rounded">
                 <div>
-                  <span class="font-medium">{{ event.name }}</span>
+                  <span class="font-medium">{{ event.name || '(unnamed)' }}</span>
                   <span class="text-sm text-gray-500 ml-2">
                     {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
                   </span>
@@ -138,6 +165,7 @@
                     {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
                   </span>
                   <span class="text-xs text-gray-400 ml-2">{{ event.frequency }}</span>
+                  <span v-if="event.currency && event.currency !== 'USD'" class="text-xs text-gray-400 ml-1">{{ event.currency }}</span>
                 </div>
                 <div class="flex gap-1">
                   <button @click="editEvent(index)"
@@ -170,7 +198,7 @@
           <!-- Results Table -->
           <div v-if="results.length > 0" class="bg-white rounded-lg shadow p-4">
             <div class="flex justify-between items-center mb-3">
-              <h2 class="text-lg font-semibold text-gray-700">Results ({{ results.length }} days)</h2>
+              <h2 class="text-lg font-semibold text-gray-700">Results ({{ results.length }} entries)</h2>
               <button @click="exportCSV"
                 class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
                 Export CSV
@@ -193,7 +221,7 @@
                       {{ row.cashflow >= 0 ? '+' : '' }}{{ row.cashflow.toFixed(2) }}
                     </td>
                     <td class="px-3 py-2 text-right font-medium">{{ row.balance.toFixed(2) }}</td>
-                    <td class="px-3 py-2 text-gray-500">{{ row.items.join(', ') }}</td>
+                    <td class="px-3 py-2 text-gray-500">{{ row.items.join(', ') || '—' }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -215,10 +243,21 @@
     </main>
   </div>
 
+  <script>
+    // Detect if Vue loaded
+    if (typeof Vue === 'undefined') {
+      document.getElementById('app').style.display = 'none';
+      document.getElementById('app-load-error').style.display = 'block';
+    }
+  </script>
+
   <script type="module">
     import { runSimulation, FREQUENCIES } from './src/cashflow.js';
 
-    const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+    const { createApp, ref, reactive, nextTick } = Vue;
+
+    const STORAGE_KEY = 'cashflow_events';
+    const CURRENCIES = ['USD', 'EUR', 'GBP', 'BRL'];
 
     createApp({
       setup() {
@@ -226,17 +265,21 @@
         const simStart = ref('2025-01-01');
         const simEnd = ref('2025-12-31');
         const initialBalance = ref(1000);
+        const simError = ref('');
 
         // Events
-        const events = ref([]);
-        const newEvent = reactive({
+        const events = ref(loadFromStorage() || []);
+        const formEvent = reactive({
           name: '',
           startDate: '2025-01-01',
           endDate: '2025-12-31',
-          frequency: 'monthly',
+          frequency: '',
           value: 0,
+          currency: 'USD',
         });
         const editingIndex = ref(null);
+        const editingSnapshot = ref(null); // preserves original during edit
+        const formError = reactive({ name: '', startDate: '', frequency: '' });
 
         // Results
         const results = ref([]);
@@ -244,6 +287,7 @@
 
         // CSV
         const csvError = ref('');
+        const csvSuccess = ref('');
 
         // Charts
         const cashflowChart = ref(null);
@@ -251,54 +295,121 @@
         let cashflowChartInstance = null;
         let balanceChartInstance = null;
 
-        // Event methods
+        // --- Persistence ---
+        function loadFromStorage() {
+          try {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            return stored ? JSON.parse(stored) : null;
+          } catch { return null; }
+        }
+
+        function saveToStorage() {
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(events.value));
+          } catch {}
+        }
+
+        // --- Validation ---
+        function validateForm() {
+          formError.name = '';
+          formError.startDate = '';
+          formError.frequency = '';
+          let valid = true;
+
+          if (!formEvent.startDate) {
+            formError.startDate = 'Start date is required';
+            valid = false;
+          }
+          if (!formEvent.frequency) {
+            formError.frequency = 'Frequency is required';
+            valid = false;
+          }
+          return valid;
+        }
+
+        function validateSimDates() {
+          simError.value = '';
+          if (simEnd.value && simStart.value && simEnd.value < simStart.value) {
+            simError.value = 'End date must be after start date';
+            return false;
+          }
+          return true;
+        }
+
+        // --- Event methods ---
         function addEvent() {
-          if (!newEvent.name || newEvent.value === 0) {
-            alert('Please enter a name and non-zero value');
-            return;
-          }
+          if (!validateForm()) return;
 
-          const event = {
-            name: newEvent.name,
-            startDate: newEvent.startDate,
-            endDate: newEvent.endDate,
-            frequency: newEvent.frequency,
-            value: parseFloat(newEvent.value),
-          };
-
-          if (editingIndex.value !== null) {
-            events.value[editingIndex.value] = event;
-            editingIndex.value = null;
-          } else {
-            events.value.push(event);
-          }
-
-          // Reset form
-          newEvent.name = '';
-          newEvent.value = 0;
+          events.value.push({
+            name: formEvent.name.trim(),
+            startDate: formEvent.startDate,
+            endDate: formEvent.endDate || formEvent.startDate,
+            frequency: formEvent.frequency,
+            value: parseFloat(formEvent.value) || 0,
+            currency: formEvent.currency || 'USD',
+          });
+          saveToStorage();
+          resetForm();
+          autoSimulate();
         }
 
         function editEvent(index) {
           const event = events.value[index];
-          newEvent.name = event.name;
-          newEvent.startDate = event.startDate;
-          newEvent.endDate = event.endDate;
-          newEvent.frequency = event.frequency;
-          newEvent.value = event.value;
+          editingSnapshot.value = { ...event }; // preserve original
           editingIndex.value = index;
+          formEvent.name = event.name || '';
+          formEvent.startDate = event.startDate || '';
+          formEvent.endDate = event.endDate || '';
+          formEvent.frequency = event.frequency || '';
+          formEvent.value = event.value || 0;
+          formEvent.currency = event.currency || 'USD';
+        }
+
+        function confirmEdit() {
+          if (!validateForm()) return;
+
+          if (editingIndex.value !== null) {
+            events.value[editingIndex.value] = {
+              name: formEvent.name.trim(),
+              startDate: formEvent.startDate,
+              endDate: formEvent.endDate || formEvent.startDate,
+              frequency: formEvent.frequency,
+              value: parseFloat(formEvent.value) || 0,
+              currency: formEvent.currency || 'USD',
+            };
+            saveToStorage();
+          }
+          cancelEdit();
+          autoSimulate();
         }
 
         function cancelEdit() {
           editingIndex.value = null;
-          newEvent.name = '';
-          newEvent.value = 0;
+          editingSnapshot.value = null;
+          resetForm();
+        }
+
+        function resetForm() {
+          formEvent.name = '';
+          formEvent.startDate = '2025-01-01';
+          formEvent.endDate = '2025-12-31';
+          formEvent.frequency = '';
+          formEvent.value = 0;
+          formEvent.currency = 'USD';
+          formError.name = '';
+          formError.startDate = '';
+          formError.frequency = '';
         }
 
         function removeEvent(index) {
           events.value.splice(index, 1);
           if (editingIndex.value === index) {
             cancelEdit();
+          } else if (editingIndex.value !== null && editingIndex.value > index) {
+            editingIndex.value--;
           }
+          saveToStorage();
+          autoSimulate();
         }
 
         function clearEvents() {
@@ -307,33 +418,52 @@
             results.value = [];
             hasRunSimulation.value = false;
             destroyCharts();
+            localStorage.removeItem(STORAGE_KEY);
           }
         }
 
-        // CSV import
+        function autoSimulate() {
+          if (events.value.length > 0 && validateSimDates()) {
+            runSim();
+          }
+        }
+
+        // --- CSV import ---
         function importCSV(event) {
           csvError.value = '';
+          csvSuccess.value = '';
           const file = event.target.files[0];
           if (!file) return;
 
           Papa.parse(file, {
             header: true,
             complete: (parsed) => {
-              try {
-                const imported = parsed.data.filter(row => row.name && row.value);
-                for (const row of imported) {
-                  events.value.push({
-                    name: row.name,
-                    startDate: row.startDate || simStart.value,
-                    endDate: row.endDate || simEnd.value,
-                    frequency: row.frequency || 'monthly',
-                    value: parseFloat(row.value),
-                  });
+              let imported = 0;
+              let skipped = 0;
+              for (const row of parsed.data) {
+                if (!row.startDate || !row.frequency) {
+                  skipped++;
+                  continue;
                 }
-                event.target.value = '';
-              } catch (e) {
-                csvError.value = 'Failed to parse CSV: ' + e.message;
+                const value = parseFloat(row.value);
+                if (isNaN(value)) {
+                  skipped++;
+                  continue;
+                }
+                events.value.push({
+                  name: row.name || '',
+                  startDate: row.startDate,
+                  endDate: row.endDate || row.startDate,
+                  frequency: row.frequency,
+                  value: value,
+                  currency: row.currency || 'USD',
+                });
+                imported++;
               }
+              csvSuccess.value = `Imported ${imported} events${skipped > 0 ? `, skipped ${skipped} rows` : ''}`;
+              if (imported > 0) saveToStorage();
+              event.target.value = '';
+              if (imported > 0) autoSimulate();
             },
             error: (err) => {
               csvError.value = 'CSV error: ' + err.message;
@@ -341,19 +471,30 @@
           });
         }
 
-        // Run simulation
+        // --- Run simulation ---
         function runSim() {
+          simError.value = '';
+          if (!validateSimDates()) return;
+
           if (events.value.length === 0) {
-            alert('Please add at least one event');
+            results.value = [];
+            hasRunSimulation.value = true;
+            destroyCharts();
             return;
           }
 
           hasRunSimulation.value = true;
-          results.value = runSimulation(events.value, initialBalance.value, simStart.value, simEnd.value);
+          results.value = runSimulation(
+            events.value,
+            initialBalance.value,
+            simStart.value,
+            simEnd.value
+          );
+          destroyCharts();
           nextTick(() => renderCharts());
         }
 
-        // Charts
+        // --- Charts ---
         function destroyCharts() {
           if (cashflowChartInstance) {
             cashflowChartInstance.destroy();
@@ -374,7 +515,6 @@
           const cashflowData = results.value.map(r => r.cashflow);
           const balanceData = results.value.map(r => r.balance);
 
-          // Cashflow bar chart
           if (cashflowChart.value) {
             cashflowChartInstance = new Chart(cashflowChart.value, {
               type: 'bar',
@@ -398,7 +538,6 @@
             });
           }
 
-          // Balance line chart (stepped)
           if (balanceChart.value) {
             balanceChartInstance = new Chart(balanceChart.value, {
               type: 'line',
@@ -426,15 +565,22 @@
           }
         }
 
-        // Export CSV
+        // --- Export CSV ---
         function exportCSV() {
+          const escape = (v) => {
+            const s = String(v ?? '');
+            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+              return '"' + s.replace(/"/g, '""') + '"';
+            }
+            return s;
+          };
           const rows = [
             ['Date', 'Cashflow', 'Balance', 'Items'],
             ...results.value.map(r => [
-              formatDate(r.date),
+              escape(formatDate(r.date)),
               r.cashflow.toFixed(2),
               r.balance.toFixed(2),
-              r.items.join('; '),
+              escape(r.items.join('; ')),
             ]),
           ];
           const csv = rows.map(r => r.join(',')).join('\n');
@@ -447,25 +593,28 @@
           URL.revokeObjectURL(url);
         }
 
-        // Utilities
+        // --- Utilities ---
         function formatDate(date) {
           if (!date) return '';
           const d = date instanceof Date ? date : new Date(date);
+          if (isNaN(d.getTime())) return '';
           const y = d.getFullYear();
           const m = String(d.getMonth() + 1).padStart(2, '0');
           const day = String(d.getDate()).padStart(2, '0');
           return `${y}-${m}-${day}`;
         }
 
+        const isEditing = () => editingIndex.value !== null;
+
         return {
-          simStart, simEnd, initialBalance,
-          events, newEvent, editingIndex,
+          simStart, simEnd, initialBalance, simError,
+          events, formEvent, editingIndex, formError,
           results, hasRunSimulation,
-          csvError,
+          csvError, csvSuccess,
           cashflowChart, balanceChart,
-          addEvent, editEvent, cancelEdit, removeEvent, clearEvents,
+          addEvent, editEvent, confirmEdit, cancelEdit, removeEvent, clearEvents,
           importCSV, runSimulation: runSim, exportCSV,
-          formatDate,
+          formatDate, isEditing,
         };
       },
     }).mount('#app');

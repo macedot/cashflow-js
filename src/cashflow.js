@@ -12,6 +12,8 @@ export const FREQUENCIES = {
   ANNUAL: 'annual',
 };
 
+const VALID_FREQUENCIES = new Set(Object.values(FREQUENCIES));
+
 /**
  * @typedef {Object} Event
  * @property {string} name
@@ -30,6 +32,15 @@ export const FREQUENCIES = {
  */
 
 /**
+ * Check if a date is valid (not Invalid Date)
+ * @param {Date} d
+ * @returns {boolean}
+ */
+export function isValidDate(d) {
+  return d instanceof Date && !isNaN(d.getTime());
+}
+
+/**
  * Parse a date string or return as-is if already a Date
  * Uses local time to avoid timezone shifts.
  * @param {Date|string} dateStr
@@ -46,12 +57,12 @@ export function parseDate(dateStr) {
 }
 
 /**
- * Check if two dates are the same day
+ * Check if two dates are the same calendar day (local time)
  * @param {Date} a
  * @param {Date} b
  * @returns {boolean}
  */
-function isSameDay(a, b) {
+export function isSameDay(a, b) {
   return a.getFullYear() === b.getFullYear() &&
          a.getMonth() === b.getMonth() &&
          a.getDate() === b.getDate();
@@ -64,6 +75,10 @@ function isSameDay(a, b) {
  * @returns {Date}
  */
 function addPeriod(date, frequency) {
+  if (!VALID_FREQUENCIES.has(frequency)) {
+    throw new Error(`Invalid frequency: "${frequency}". Must be one of: ${[...VALID_FREQUENCIES].join(', ')}`);
+  }
+
   const year = date.getFullYear();
   const month = date.getMonth();
   const day = date.getDate();
@@ -98,13 +113,15 @@ function addPeriod(date, frequency) {
       const nextDay = Math.min(day, daysInNextMonth);
       return new Date(nextYear, nextMonthNormalized, nextDay);
     }
-    case FREQUENCIES.ANNUAL:
-      // Handle leap year
-      const daysInNextYear = new Date(year + 1, 1, 29).getMonth() === 1 ? 366 : 365;
-      const nextDay = day === 29 && daysInNextYear === 365 ? 28 : day;
-      return new Date(year + 1, month, nextDay);
+    case FREQUENCIES.ANNUAL: {
+      // If starting on Feb 29 and next year is not a leap year, roll back to Feb 28
+      const isLeapYear = (y) => new Date(y, 1, 29).getMonth() === 1;
+      const nextYear = year + 1;
+      const nextDay = (day === 29 && !isLeapYear(nextYear)) ? 28 : day;
+      return new Date(nextYear, month, nextDay);
+    }
     default:
-      return new Date(year, month, day + 1);
+      throw new Error(`Unhandled frequency: ${frequency}`);
   }
 }
 
@@ -135,13 +152,6 @@ export function generateEventCashflows(event, simStart, simEnd) {
   // Find the first occurrence
   let currentDate = new Date(effectiveStart);
 
-  // For non-daily frequencies, we need to find the first occurrence that aligns
-  // with the event's schedule
-  if (event.frequency !== FREQUENCIES.DAILY) {
-    // For simplicity, the first occurrence is on effectiveStart
-    // (the original Go code does the same)
-  }
-
   // Generate all occurrences
   while (currentDate <= effectiveEnd) {
     result.push({
@@ -158,6 +168,8 @@ export function generateEventCashflows(event, simStart, simEnd) {
 
 /**
  * Run a full cashflow simulation.
+ * Returns one entry per calendar day from simStart to simEnd (inclusive).
+ * Days with no events have cashflow=0 and balance carried forward.
  *
  * @param {Event[]} events - Array of events to simulate
  * @param {number} initialBalance - Starting balance
@@ -169,45 +181,50 @@ export function runSimulation(events, initialBalance, simStart, simEnd) {
   const start = parseDate(simStart);
   const end = parseDate(simEnd);
 
-  // Collect all cashflow occurrences
-  const allCashflows = [];
+  // Collect all cashflow occurrences keyed by date
+  const cashflowByDate = new Map();
+
   for (const event of events) {
     const eventCashflows = generateEventCashflows(event, start, end);
-    allCashflows.push(...eventCashflows);
-  }
-
-  // Group by date and sum
-  const cashflowByDate = new Map();
-  for (const cf of allCashflows) {
-    // Use local date for key to avoid timezone issues
-    const y = cf.date.getFullYear();
-    const m = String(cf.date.getMonth() + 1).padStart(2, '0');
-    const d = String(cf.date.getDate()).padStart(2, '0');
-    const dateKey = `${y}-${m}-${d}`;
-    if (!cashflowByDate.has(dateKey)) {
-      cashflowByDate.set(dateKey, { date: new Date(y, cf.date.getMonth(), d), cashflow: 0, items: [] });
+    for (const cf of eventCashflows) {
+      const dateKey = `${cf.date.getFullYear()}-${cf.date.getMonth()}-${cf.date.getDate()}`;
+      if (!cashflowByDate.has(dateKey)) {
+        cashflowByDate.set(dateKey, { date: cf.date, cashflow: 0, items: [] });
+      }
+      const entry = cashflowByDate.get(dateKey);
+      entry.cashflow += cf.value;
+      entry.items.push(cf.name);
     }
-    const entry = cashflowByDate.get(dateKey);
-    entry.cashflow += cf.value;
-    entry.items.push(cf.name);
   }
 
-  // Sort by date
-  const sortedDates = Array.from(cashflowByDate.values()).sort(
-    (a, b) => a.date - b.date
-  );
-
-  // Calculate running balance
-  let balance = initialBalance;
+  // Build continuous daily results from simStart to simEnd
   const results = [];
-  for (const entry of sortedDates) {
-    balance += entry.cashflow;
-    results.push({
-      date: entry.date,
-      cashflow: entry.cashflow,
-      balance: balance,
-      items: entry.items,
-    });
+  let balance = initialBalance;
+  let current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+
+  while (current <= endDay) {
+    const dateKey = `${current.getFullYear()}-${current.getMonth()}-${current.getDate()}`;
+    const entry = cashflowByDate.get(dateKey);
+
+    if (entry) {
+      balance += entry.cashflow;
+      results.push({
+        date: new Date(current),
+        cashflow: entry.cashflow,
+        balance: balance,
+        items: [...entry.items],
+      });
+    } else {
+      results.push({
+        date: new Date(current),
+        cashflow: 0,
+        balance: balance,
+        items: [],
+      });
+    }
+
+    current.setDate(current.getDate() + 1);
   }
 
   return results;
