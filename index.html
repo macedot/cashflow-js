@@ -20,42 +20,20 @@
   </div>
   <div id="app" v-cloak>
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 shadow">
-      <h1 class="text-2xl font-bold">CashflowSim</h1>
-      <p class="text-blue-100 text-sm">Client-side cashflow simulation</p>
+    <header class="bg-blue-600 text-white p-4 shadow flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold">CashflowSim</h1>
+        <p class="text-blue-100 text-sm">Client-side cashflow simulation</p>
+      </div>
+      <button @click="toggleTheme" class="text-white hover:text-blue-200 text-2xl" :title="darkMode ? 'Light mode' : 'Dark mode'">
+        {{ darkMode ? '🌙' : '☀️' }}
+      </button>
     </header>
 
     <main class="container mx-auto p-4 max-w-6xl">
       <div class="grid md:grid-cols-2 gap-6">
         <!-- Left Column: Event Input -->
         <div class="space-y-4">
-          <!-- Simulation Settings -->
-          <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-semibold mb-3 text-gray-700">Simulation Settings</h2>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Start Date</label>
-                <input type="date" v-model="simStart"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">End Date</label>
-                <input type="date" v-model="simEnd"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <p v-if="simError" class="error-msg">{{ simError }}</p>
-              </div>
-              <div class="col-span-2">
-                <label class="block text-sm text-gray-600 mb-1">Initial Balance ($)</label>
-                <input type="number" v-model.number="initialBalance" step="0.01"
-                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-              </div>
-            </div>
-            <button @click="runSimulation"
-              class="mt-3 w-full bg-blue-600 text-white rounded py-3 px-4 hover:bg-blue-700 transition">
-              Run Simulation
-            </button>
-          </div>
-
           <!-- Add Event Form -->
           <div class="bg-white rounded-lg shadow p-4">
             <h2 class="text-lg font-semibold mb-3 text-gray-700">
@@ -133,23 +111,25 @@
             </div>
           </div>
 
-          <!-- CSV Import -->
-          <div class="bg-white rounded-lg shadow p-4">
-            <h2 class="text-lg font-semibold mb-3 text-gray-700">Import CSV</h2>
-            <p class="text-sm text-gray-500 mb-2">Columns: name, startDate, endDate, frequency, value, currency</p>
-            <input type="file" accept=".csv" @change="importCSV"
-              class="w-full border rounded px-3 py-2 focus:outline-none">
-            <p v-if="csvError" class="error-msg mt-2">{{ csvError }}</p>
-            <p v-if="csvSuccess" class="text-green-600 text-sm mt-2">{{ csvSuccess }}</p>
-          </div>
-
           <!-- Event List -->
           <div class="bg-white rounded-lg shadow p-4">
             <div class="flex justify-between items-center mb-3">
               <h2 class="text-lg font-semibold text-gray-700">Events ({{ events.length }})</h2>
-              <button v-if="events.length > 0" @click="clearEvents"
-                class="text-sm text-red-500 hover:text-red-700">Clear All</button>
+              <div class="flex gap-2">
+                <label class="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded hover:bg-gray-200 cursor-pointer">
+                  Import CSV
+                  <input type="file" accept=".csv" @change="importCSV" class="hidden">
+                </label>
+                <button v-if="events.length > 0" @click="exportCSV"
+                  class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                  Export CSV
+                </button>
+                <button v-if="events.length > 0" @click="clearEvents"
+                  class="text-sm text-red-500 hover:text-red-700">Clear All</button>
+              </div>
             </div>
+            <p v-if="csvError" class="error-msg mb-2">{{ csvError }}</p>
+            <p v-if="csvSuccess" class="text-green-600 text-sm mb-2">{{ csvSuccess }}</p>
             <div v-if="events.length === 0" class="text-gray-400 text-center py-4">
               No events added yet
             </div>
@@ -180,6 +160,28 @@
 
         <!-- Right Column: Results -->
         <div class="space-y-4">
+          <!-- Simulation Settings -->
+          <div class="bg-white rounded-lg shadow p-4">
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Start Date</label>
+                <input type="date" v-model="simStart"
+                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">End Date</label>
+                <input type="date" v-model="simEnd"
+                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <p v-if="simError" class="error-msg">{{ simError }}</p>
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Initial Balance ($)</label>
+                <input type="number" v-model.number="initialBalance" step="0.01"
+                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+          </div>
+
           <!-- Charts -->
           <div v-if="results.length > 0" class="bg-white rounded-lg shadow p-4">
             <h2 class="text-lg font-semibold mb-3 text-gray-700">Cashflows Over Time</h2>
@@ -198,11 +200,7 @@
           <!-- Results Table -->
           <div v-if="results.length > 0" class="bg-white rounded-lg shadow p-4">
             <div class="flex justify-between items-center mb-3">
-              <h2 class="text-lg font-semibold text-gray-700">Results ({{ results.length }} entries)</h2>
-              <button @click="exportCSV"
-                class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
-                Export CSV
-              </button>
+              <h2 class="text-lg font-semibold text-gray-700">Results ({{ filteredResults.length }} entries)</h2>
             </div>
             <div class="overflow-x-auto max-h-64 overflow-y-auto">
               <table class="w-full text-sm">
@@ -215,7 +213,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="(row, i) in results" :key="i" class="border-t">
+                  <tr v-for="(row, i) in filteredResults" :key="i" class="border-t">
                     <td class="px-3 py-2">{{ formatDate(row.date) }}</td>
                     <td class="px-3 py-2 text-right" :class="row.cashflow >= 0 ? 'text-green-600' : 'text-red-600'">
                       {{ row.cashflow >= 0 ? '+' : '' }}{{ row.cashflow.toFixed(2) }}
@@ -254,7 +252,7 @@
   <script type="module">
     import { runSimulation, FREQUENCIES } from './src/cashflow.js';
 
-    const { createApp, ref, reactive, nextTick } = Vue;
+    const { createApp, ref, reactive, computed, nextTick, onMounted } = Vue;
 
     const STORAGE_KEY = 'cashflow_events';
     const CURRENCIES = ['USD', 'EUR', 'GBP', 'BRL'];
@@ -266,6 +264,13 @@
         const simEnd = ref('2025-12-31');
         const initialBalance = ref(1000);
         const simError = ref('');
+
+        // Theme
+        const darkMode = ref(false);
+        function toggleTheme() {
+          darkMode.value = !darkMode.value;
+          document.documentElement.classList.toggle('dark', darkMode.value);
+        }
 
         // Events
         const events = ref(loadFromStorage() || []);
@@ -284,6 +289,12 @@
         // Results
         const results = ref([]);
         const hasRunSimulation = ref(false);
+        const filteredResults = computed(() => {
+          const r = results.value || [];
+          return r.filter((row, i) =>
+            row.cashflow !== 0 || i === 0 || i === r.length - 1
+          );
+        });
 
         // CSV
         const csvError = ref('');
@@ -294,6 +305,9 @@
         const balanceChart = ref(null);
         let cashflowChartInstance = null;
         let balanceChartInstance = null;
+
+        // --- Auto-run on mount ---
+        onMounted(autoSimulate);
 
         // --- Persistence ---
         function loadFromStorage() {
@@ -427,7 +441,7 @@
         }
 
         function autoSimulate() {
-          if (events.value.length > 0 && validateSimDates()) {
+          if (validateSimDates()) {
             runSim();
           }
         }
@@ -479,13 +493,6 @@
         function runSim() {
           simError.value = '';
           if (!validateSimDates()) return;
-
-          if (events.value.length === 0) {
-            results.value = [];
-            hasRunSimulation.value = true;
-            destroyCharts();
-            return;
-          }
 
           hasRunSimulation.value = true;
           results.value = runSimulation(
@@ -613,12 +620,13 @@
         return {
           simStart, simEnd, initialBalance, simError,
           events, formEvent, editingIndex, formError,
-          results, hasRunSimulation,
+          results, hasRunSimulation, filteredResults,
           csvError, csvSuccess,
           cashflowChart, balanceChart,
           addEvent, editEvent, confirmEdit, cancelEdit, removeEvent, clearEvents,
           importCSV, runSimulation: runSim, exportCSV,
           formatDate, isEditing,
+          darkMode, toggleTheme,
         };
       },
     }).mount('#app');
