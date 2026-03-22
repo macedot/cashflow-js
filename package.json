@@ -1,7 +1,7 @@
 {
   "name": "cf-sim",
   "version": "1.0.0",
-  "description": "Cashflow Simulator — client-side cashflow simulation SPA",
+  "description": "Visualize your income, expenses, and balance over time",
   "type": "module",
   "scripts": {
     "test": "vitest run",
