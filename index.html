@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CashflowSim</title>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    [v-cloak] { display: none; }
+    .chart-container { position: relative; height: 300px; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div id="app" v-cloak>
+    <!-- Header -->
+    <header class="bg-blue-600 text-white p-4 shadow">
+      <h1 class="text-2xl font-bold">CashflowSim</h1>
+      <p class="text-blue-100 text-sm">Client-side cashflow simulation</p>
+    </header>
+
+    <main class="container mx-auto p-4 max-w-6xl">
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Left Column: Event Input -->
+        <div class="space-y-4">
+          <!-- Simulation Settings -->
+          <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="text-lg font-semibold mb-3 text-gray-700">Simulation Settings</h2>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Start Date</label>
+                <input type="date" v-model="simStart"
+                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">End Date</label>
+                <input type="date" v-model="simEnd"
+                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div class="col-span-2">
+                <label class="block text-sm text-gray-600 mb-1">Initial Balance ($)</label>
+                <input type="number" v-model.number="initialBalance" step="0.01"
+                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+            <button @click="runSimulation"
+              class="mt-3 w-full bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 transition">
+              Run Simulation
+            </button>
+          </div>
+
+          <!-- Add Event Form -->
+          <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="text-lg font-semibold mb-3 text-gray-700">
+              {{ editingIndex !== null ? 'Edit Event' : 'Add Event' }}
+            </h2>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Name</label>
+                <input type="text" v-model="newEvent.name" placeholder="e.g., Salary, Rent"
+                  class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">Start Date</label>
+                  <input type="date" v-model="newEvent.startDate"
+                    class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">End Date</label>
+                  <input type="date" v-model="newEvent.endDate"
+                    class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">Frequency</label>
+                  <select v-model="newEvent.frequency"
+                    class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly" selected>Monthly</option>
+                    <option value="quarterly">Quarterly</option>
+                    <option value="semi-annual">Semi-Annual</option>
+                    <option value="annual">Annual</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm text-gray-600 mb-1">Amount ($)</label>
+                  <input type="number" v-model.number="newEvent.value" step="0.01"
+                    class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Negative for expense">
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button @click="addEvent"
+                  class="flex-1 bg-green-600 text-white rounded py-2 px-4 hover:bg-green-700 transition">
+                  {{ editingIndex !== null ? 'Update' : 'Add' }}
+                </button>
+                <button v-if="editingIndex !== null" @click="cancelEdit"
+                  class="flex-1 bg-gray-500 text-white rounded py-2 px-4 hover:bg-gray-600 transition">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- CSV Import -->
+          <div class="bg-white rounded-lg shadow p-4">
+            <h2 class="text-lg font-semibold mb-3 text-gray-700">Import CSV</h2>
+            <p class="text-sm text-gray-500 mb-2">Columns: name, startDate, endDate, frequency, value</p>
+            <input type="file" accept=".csv" @change="importCSV"
+              class="w-full border rounded px-3 py-2 focus:outline-none">
+            <p v-if="csvError" class="text-red-500 text-sm mt-2">{{ csvError }}</p>
+          </div>
+
+          <!-- Event List -->
+          <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex justify-between items-center mb-3">
+              <h2 class="text-lg font-semibold text-gray-700">Events ({{ events.length }})</h2>
+              <button v-if="events.length > 0" @click="clearEvents"
+                class="text-sm text-red-500 hover:text-red-700">Clear All</button>
+            </div>
+            <div v-if="events.length === 0" class="text-gray-400 text-center py-4">
+              No events added yet
+            </div>
+            <div v-else class="space-y-2 max-h-64 overflow-y-auto">
+              <div v-for="(event, index) in events" :key="index"
+                class="flex justify-between items-center p-2 bg-gray-50 rounded">
+                <div>
+                  <span class="font-medium">{{ event.name }}</span>
+                  <span class="text-sm text-gray-500 ml-2">
+                    {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
+                  </span>
+                  <span :class="event.value >= 0 ? 'text-green-600' : 'text-red-600'" class="text-sm ml-2">
+                    {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
+                  </span>
+                  <span class="text-xs text-gray-400 ml-2">{{ event.frequency }}</span>
+                </div>
+                <div class="flex gap-1">
+                  <button @click="editEvent(index)"
+                    class="text-blue-500 hover:text-blue-700 px-2">Edit</button>
+                  <button @click="removeEvent(index)"
+                    class="text-red-500 hover:text-red-700 px-2">X</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Results -->
+        <div class="space-y-4">
+          <!-- Charts -->
+          <div v-if="results.length > 0" class="bg-white rounded-lg shadow p-4">
+            <h2 class="text-lg font-semibold mb-3 text-gray-700">Cashflows Over Time</h2>
+            <div class="chart-container">
+              <canvas ref="cashflowChart"></canvas>
+            </div>
+          </div>
+
+          <div v-if="results.length > 0" class="bg-white rounded-lg shadow p-4">
+            <h2 class="text-lg font-semibold mb-3 text-gray-700">Balance Over Time</h2>
+            <div class="chart-container">
+              <canvas ref="balanceChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Results Table -->
+          <div v-if="results.length > 0" class="bg-white rounded-lg shadow p-4">
+            <div class="flex justify-between items-center mb-3">
+              <h2 class="text-lg font-semibold text-gray-700">Results ({{ results.length }} days)</h2>
+              <button @click="exportCSV"
+                class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                Export CSV
+              </button>
+            </div>
+            <div class="overflow-x-auto max-h-64 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-100 sticky top-0">
+                  <tr>
+                    <th class="px-3 py-2 text-left">Date</th>
+                    <th class="px-3 py-2 text-right">Cashflow</th>
+                    <th class="px-3 py-2 text-right">Balance</th>
+                    <th class="px-3 py-2 text-left">Items</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, i) in results" :key="i" class="border-t">
+                    <td class="px-3 py-2">{{ formatDate(row.date) }}</td>
+                    <td class="px-3 py-2 text-right" :class="row.cashflow >= 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ row.cashflow >= 0 ? '+' : '' }}{{ row.cashflow.toFixed(2) }}
+                    </td>
+                    <td class="px-3 py-2 text-right font-medium">{{ row.balance.toFixed(2) }}</td>
+                    <td class="px-3 py-2 text-gray-500">{{ row.items.join(', ') }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div v-if="results.length === 0 && hasRunSimulation"
+            class="bg-white rounded-lg shadow p-8 text-center text-gray-400">
+            No cashflow events in the selected date range
+          </div>
+
+          <div v-if="results.length === 0 && !hasRunSimulation"
+            class="bg-white rounded-lg shadow p-8 text-center text-gray-400">
+            Run a simulation to see results
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { runSimulation, FREQUENCIES } from './src/cashflow.js';
+
+    const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+
+    createApp({
+      setup() {
+        // Simulation settings
+        const simStart = ref('2025-01-01');
+        const simEnd = ref('2025-12-31');
+        const initialBalance = ref(1000);
+
+        // Events
+        const events = ref([]);
+        const newEvent = reactive({
+          name: '',
+          startDate: '2025-01-01',
+          endDate: '2025-12-31',
+          frequency: 'monthly',
+          value: 0,
+        });
+        const editingIndex = ref(null);
+
+        // Results
+        const results = ref([]);
+        const hasRunSimulation = ref(false);
+
+        // CSV
+        const csvError = ref('');
+
+        // Charts
+        const cashflowChart = ref(null);
+        const balanceChart = ref(null);
+        let cashflowChartInstance = null;
+        let balanceChartInstance = null;
+
+        // Event methods
+        function addEvent() {
+          if (!newEvent.name || newEvent.value === 0) {
+            alert('Please enter a name and non-zero value');
+            return;
+          }
+
+          const event = {
+            name: newEvent.name,
+            startDate: newEvent.startDate,
+            endDate: newEvent.endDate,
+            frequency: newEvent.frequency,
+            value: parseFloat(newEvent.value),
+          };
+
+          if (editingIndex.value !== null) {
+            events.value[editingIndex.value] = event;
+            editingIndex.value = null;
+          } else {
+            events.value.push(event);
+          }
+
+          // Reset form
+          newEvent.name = '';
+          newEvent.value = 0;
+        }
+
+        function editEvent(index) {
+          const event = events.value[index];
+          newEvent.name = event.name;
+          newEvent.startDate = event.startDate;
+          newEvent.endDate = event.endDate;
+          newEvent.frequency = event.frequency;
+          newEvent.value = event.value;
+          editingIndex.value = index;
+        }
+
+        function cancelEdit() {
+          editingIndex.value = null;
+          newEvent.name = '';
+          newEvent.value = 0;
+        }
+
+        function removeEvent(index) {
+          events.value.splice(index, 1);
+          if (editingIndex.value === index) {
+            cancelEdit();
+          }
+        }
+
+        function clearEvents() {
+          if (confirm('Clear all events?')) {
+            events.value = [];
+            results.value = [];
+            hasRunSimulation.value = false;
+            destroyCharts();
+          }
+        }
+
+        // CSV import
+        function importCSV(event) {
+          csvError.value = '';
+          const file = event.target.files[0];
+          if (!file) return;
+
+          Papa.parse(file, {
+            header: true,
+            complete: (parsed) => {
+              try {
+                const imported = parsed.data.filter(row => row.name && row.value);
+                for (const row of imported) {
+                  events.value.push({
+                    name: row.name,
+                    startDate: row.startDate || simStart.value,
+                    endDate: row.endDate || simEnd.value,
+                    frequency: row.frequency || 'monthly',
+                    value: parseFloat(row.value),
+                  });
+                }
+                event.target.value = '';
+              } catch (e) {
+                csvError.value = 'Failed to parse CSV: ' + e.message;
+              }
+            },
+            error: (err) => {
+              csvError.value = 'CSV error: ' + err.message;
+            },
+          });
+        }
+
+        // Run simulation
+        function runSim() {
+          if (events.value.length === 0) {
+            alert('Please add at least one event');
+            return;
+          }
+
+          hasRunSimulation.value = true;
+          results.value = runSimulation(events.value, initialBalance.value, simStart.value, simEnd.value);
+          nextTick(() => renderCharts());
+        }
+
+        // Charts
+        function destroyCharts() {
+          if (cashflowChartInstance) {
+            cashflowChartInstance.destroy();
+            cashflowChartInstance = null;
+          }
+          if (balanceChartInstance) {
+            balanceChartInstance.destroy();
+            balanceChartInstance = null;
+          }
+        }
+
+        function renderCharts() {
+          destroyCharts();
+
+          if (results.value.length === 0) return;
+
+          const labels = results.value.map(r => formatDate(r.date));
+          const cashflowData = results.value.map(r => r.cashflow);
+          const balanceData = results.value.map(r => r.balance);
+
+          // Cashflow bar chart
+          if (cashflowChart.value) {
+            cashflowChartInstance = new Chart(cashflowChart.value, {
+              type: 'bar',
+              data: {
+                labels,
+                datasets: [{
+                  label: 'Cashflow',
+                  data: cashflowData,
+                  backgroundColor: cashflowData.map(v => v >= 0 ? 'rgba(34, 197, 94, 0.7)' : 'rgba(239, 68, 68, 0.7)'),
+                }],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { ticks: { maxRotation: 45, minRotation: 45 } },
+                  y: { beginAtZero: true },
+                },
+              },
+            });
+          }
+
+          // Balance line chart (stepped)
+          if (balanceChart.value) {
+            balanceChartInstance = new Chart(balanceChart.value, {
+              type: 'line',
+              data: {
+                labels,
+                datasets: [{
+                  label: 'Balance',
+                  data: balanceData,
+                  borderColor: 'rgb(59, 130, 246)',
+                  backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                  fill: true,
+                  stepped: 'before',
+                }],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  x: { ticks: { maxRotation: 45, minRotation: 45 } },
+                  y: { beginAtZero: false },
+                },
+              },
+            });
+          }
+        }
+
+        // Export CSV
+        function exportCSV() {
+          const rows = [
+            ['Date', 'Cashflow', 'Balance', 'Items'],
+            ...results.value.map(r => [
+              formatDate(r.date),
+              r.cashflow.toFixed(2),
+              r.balance.toFixed(2),
+              r.items.join('; '),
+            ]),
+          ];
+          const csv = rows.map(r => r.join(',')).join('\n');
+          const blob = new Blob([csv], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'cashflow-results.csv';
+          a.click();
+          URL.revokeObjectURL(url);
+        }
+
+        // Utilities
+        function formatDate(date) {
+          if (!date) return '';
+          const d = date instanceof Date ? date : new Date(date);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${y}-${m}-${day}`;
+        }
+
+        return {
+          simStart, simEnd, initialBalance,
+          events, newEvent, editingIndex,
+          results, hasRunSimulation,
+          csvError,
+          cashflowChart, balanceChart,
+          addEvent, editEvent, cancelEdit, removeEvent, clearEvents,
+          importCSV, runSimulation: runSim, exportCSV,
+          formatDate,
+        };
+      },
+    }).mount('#app');
+  </script>
+</body>
+</html>
