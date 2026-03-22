@@ -7,10 +7,10 @@ A client-side cashflow simulation tool. Visualize income and expenses over time 
 ```bash
 # Serve the app (required for ES modules)
 python3 -m http.server 8080
-# Open http://localhost:8080/cf-sim.html
+# Open http://localhost:8080
 ```
 
-Or open `cf-sim.html` directly in a modern browser.
+Or open `index.html` directly in a modern browser.
 
 ## ✨ Features
 
