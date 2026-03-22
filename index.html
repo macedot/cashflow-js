@@ -259,7 +259,7 @@
           <div class="flex gap-2">
             <button @click="chartFullscreen = !chartFullscreen"
               class="text-sm bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500">
-              {{ chartFullscreen ? 'Exit Fullscreen' : 'Fullscreen' }}
+              {{ chartFullscreen ? '⊠' : '⛶' }}
             </button>
             <button @click="exportResultsCSV"
               class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700">
@@ -273,7 +273,7 @@
       </div>
 
       <!-- Chart Fullscreen Overlay -->
-      <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-80">
+      <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900">
         <div class="w-full max-w-6xl h-full flex flex-col p-4">
           <div class="flex justify-end mb-2">
             <button @click="chartFullscreen = false"
@@ -750,6 +750,22 @@
             const fullscreenOptions = JSON.parse(JSON.stringify(chartOptions));
             fullscreenOptions.responsive = true;
             fullscreenOptions.maintainAspectRatio = false;
+            fullscreenOptions.scales = {
+              x: {
+                ticks: { maxRotation: 45, minRotation: 45, color: '#e5e7eb' },
+                grid: { color: '#4b5563' },
+                categoryPercentage: 0.5,
+                barPercentage: 1,
+              },
+              y: { beginAtZero: false, ticks: { color: '#e5e7eb' }, grid: { color: '#4b5563' } },
+            };
+            fullscreenOptions.plugins = {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: { color: '#e5e7eb' },
+              },
+            };
             const fullscreenConfig = JSON.parse(JSON.stringify(chartConfig));
             fullscreenConfig.options = fullscreenOptions;
             cashflowChartFullscreenInstance = new Chart(cashflowChartFullscreen.value, fullscreenConfig);
