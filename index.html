@@ -1,5 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
+<script>
+  // Set dark class BEFORE Tailwind CSS parses — ensures dark: variants work
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.classList.add('dark');
+  }
+</script>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -7,9 +13,6 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script>
-    tailwindDarkMode = 'class';
-  </script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <style>
     [v-cloak] { display: none; }
@@ -367,16 +370,14 @@
         loadSimParams();
 
         // Theme
-        const darkMode = ref(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        if (darkMode.value) {
-          document.documentElement.classList.add('dark');
-        }
+        const darkMode = ref(document.documentElement.classList.contains('dark'));
         let userToggled = false;
         function toggleTheme() {
           userToggled = true;
           darkMode.value = !darkMode.value;
           document.documentElement.classList.toggle('dark', darkMode.value);
         }
+        if (window.matchMedia) {
         if (window.matchMedia) {
           window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (!userToggled) {
