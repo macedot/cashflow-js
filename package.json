@@ -1,0 +1,13 @@
+{
+  "name": "cashflow-js",
+  "version": "1.0.0",
+  "description": "Client-side cashflow simulation SPA",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^1.0.0"
+  }
+}

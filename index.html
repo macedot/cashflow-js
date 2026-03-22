@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>CashflowSim</title>
   <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -51,7 +51,7 @@
               </div>
             </div>
             <button @click="runSimulation"
-              class="mt-3 w-full bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 transition">
+              class="mt-3 w-full bg-blue-600 text-white rounded py-3 px-4 hover:bg-blue-700 transition">
               Run Simulation
             </button>
           </div>
@@ -116,16 +116,16 @@
               <p class="text-xs text-gray-400">* Required: Start Date and Frequency</p>
               <div class="flex gap-2">
                 <button v-if="!isEditing()" @click="addEvent"
-                  class="flex-1 bg-green-600 text-white rounded py-2 px-4 hover:bg-green-700 transition">
+                  class="flex-1 bg-green-600 text-white rounded py-3 px-4 hover:bg-green-700 transition">
                   Add Event
                 </button>
                 <template v-else>
                   <button @click="confirmEdit"
-                    class="flex-1 bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 transition">
+                    class="flex-1 bg-blue-600 text-white rounded py-3 px-4 hover:bg-blue-700 transition">
                     OK
                   </button>
                   <button @click="cancelEdit"
-                    class="flex-1 bg-gray-500 text-white rounded py-2 px-4 hover:bg-gray-600 transition">
+                    class="flex-1 bg-gray-500 text-white rounded py-3 px-4 hover:bg-gray-600 transition">
                     Cancel
                   </button>
                 </template>

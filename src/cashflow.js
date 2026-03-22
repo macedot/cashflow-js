@@ -57,18 +57,6 @@ export function parseDate(dateStr) {
 }
 
 /**
- * Check if two dates are the same calendar day (local time)
- * @param {Date} a
- * @param {Date} b
- * @returns {boolean}
- */
-export function isSameDay(a, b) {
-  return a.getFullYear() === b.getFullYear() &&
-         a.getMonth() === b.getMonth() &&
-         a.getDate() === b.getDate();
-}
-
-/**
  * Add a time period to a date (in local time)
  * @param {Date} date
  * @param {string} frequency
