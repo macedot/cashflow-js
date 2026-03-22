@@ -28,11 +28,12 @@ npm run test:watch # watch mode
 ```
 index.html          # Vue 3 SPA (CDN-based, no build step)
 src/
-  cashflow.js      # Core simulation logic (ES module)
+  cashflow.js      # Pure simulation logic — zero dependencies, ES module
   cashflow.test.js # Vitest unit tests
+  style.css        # Custom CSS (dark mode via CSS custom properties)
 ```
 
-**`src/cashflow.js`** contains pure functions:
+**`src/cashflow.js`** — standalone module, no Vue, no Chart.js, no external imports. Can be imported by any JS project:
 - `runSimulation(events, initialBalance, simStart, simEnd)` → `CashflowEntry[]`
 - `generateEventCashflows(event, simStart, simEnd)` → `DateValue[]`
 - `parseDate(dateStr)` — uses local time to avoid timezone shifts
@@ -46,8 +47,10 @@ src/
 - Vue 3 (CDN) — reactive UI with Composition API
 - Chart.js (CDN) — mixed bar/line chart (Income/Expense bars + Balance stepped line)
 - PapaParse (CDN) — CSV import
-- Tailwind CSS (CDN) — styling with `tailwindDarkMode = 'class'` for dark mode
-- localStorage — events and simulation params persist across sessions
+- Tailwind CSS (CDN) — base styling
+- `src/style.css` — dark mode (CSS custom properties), chart container, toggle icons
+
+**`src/style.css`** — dark/light theme via `.dark` class on `<html>`, CSS custom properties override Tailwind utilities in dark mode.
 
 ## Key Vue Patterns
 

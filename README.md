@@ -29,8 +29,9 @@ Or open `index.html` directly in a modern browser.
 ```
 index.html          # Vue 3 SPA (CDN, no build step)
 src/
-  cashflow.js      # Core simulation logic
+  cashflow.js      # Pure simulation logic — zero dependencies, ES module
   cashflow.test.js # Vitest unit tests
+  style.css        # Custom CSS (dark mode, theme overrides)
 vitest.config.js   # Test runner config
 package.json       # npm scripts
 ```
@@ -45,12 +46,15 @@ npm run test:watch  # watch mode
 
 ## 🧮 How It Works
 
-1. Add events (e.g., "Salary" monthly, "Rent" monthly)
-2. Set simulation date range and initial balance
-3. Click **Run Simulation**
-4. View charts and table
+1. Add events (e.g., "Salary" monthly, "Rent" monthly) — simulation runs automatically
+2. Set simulation date range and portfolio currency
+3. View charts and results table
 
 Results show **every calendar day** from start to end. Days without events carry the balance forward.
+
+## 🌙 Dark Mode
+
+Toggle between light and dark theme. Dark mode follows your OS preference on first load.
 
 ## 📝 CSV Format
 
