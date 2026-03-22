@@ -1,7 +1,7 @@
 {
-  "name": "cashflow-js",
+  "name": "cf-sim",
   "version": "1.0.0",
-  "description": "Client-side cashflow simulation SPA",
+  "description": "Cashflow Simulator — client-side cashflow simulation SPA",
   "type": "module",
   "scripts": {
     "test": "vitest run",

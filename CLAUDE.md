@@ -12,7 +12,7 @@ Since `src/cashflow.js` uses ES modules, the app must be served over HTTP:
 
 ```bash
 python3 -m http.server 8080
-# Then open http://localhost:8080
+# Then open http://localhost:8080/cf-sim.html
 ```
 
 ## Commands
@@ -26,7 +26,7 @@ npm run test:watch # watch mode
 ## Architecture
 
 ```
-index.html          # Vue 3 SPA (CDN-based, no build step)
+cf-sim.html         # Vue 3 SPA (CDN-based, no build step)
 src/
   cashflow.js      # Pure simulation logic — zero dependencies, ES module
   cashflow.test.js # Vitest unit tests
