@@ -713,7 +713,9 @@
               x: {
                 type: 'category',
                 ticks: { maxRotation: 45, minRotation: 45 },
-                offset: false,
+                offset: true,
+                categoryPercentage: 0.5,
+                barPercentage: 1.0,
               },
               y: { beginAtZero: false },
             },
@@ -772,7 +774,9 @@
                 type: 'category',
                 ticks: { maxRotation: 45, minRotation: 45, color: textColor },
                 grid: { color: gridColor },
-                offset: false,
+                offset: true,
+                categoryPercentage: 0.5,
+                barPercentage: 1.0,
               },
               y: { beginAtZero: false, ticks: { color: textColor }, grid: { color: gridColor } },
             };
