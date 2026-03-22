@@ -20,7 +20,7 @@
 | Q10 | Web Worker | Deferred — adds complexity, sync execution acceptable for now | deferred |
 | Q11 | Charts keep as is | No change | verified |
 | Q12 | Test framework | Vitest with 30 passing tests | verified |
-| Q13 | Remove dead isSameDay | Kept — not used but not removed | partial |
+| Q13 | Remove dead isSameDay | Removed — dead code (Q13) | verified |
 | Q14 | Validate frequencies | addPeriod throws descriptive error for unknown frequency | verified |
 | Q15 | Remove unused onMounted | Removed | verified |
 | Q16 | cancelEdit resets all fields | Form resets all fields including startDate/endDate/frequency/currency | verified |
@@ -39,7 +39,7 @@
 | Q29 | Leap year logic | Verified correct, simplified isLeapYear check | verified |
 | Q30 | "entries" not "days" | Changed to "{{ results.length }} entries" | verified |
 | Q31 | Currency field | Added currency dropdown (USD/EUR/GBP/BRL), default USD, passed through | verified |
-| Q32 | Mobile compatibility | Deferred — CSS not yet adjusted | deferred |
+| Q32 | Mobile compatibility | Buttons py-3 (44px touch), viewport-fit=cover | verified |
 | Q33 | Frequency lowercase hyphen | Already correct | verified |
 
 ---
