@@ -15,13 +15,14 @@ Or open `index.html` directly in a modern browser.
 ## ✨ Features
 
 - 📅 **Recurring events** — daily, weekly, monthly, quarterly, semi-annual, annual
-- 📊 **Bar chart** — cashflows over time
-- 📈 **Step line chart** — running balance over time
+- 📊 **Bar + line chart** — cashflows (bars) and balance (stepped line) over time
+- ⛶ **Fullscreen chart** — expand chart to fullscreen with ESC to exit
 - 📋 **Results table** — daily breakdown with event details
 - 📥 **CSV import** — bulk import events
 - 📤 **CSV export** — download results
 - 💾 **localStorage** — events persist across sessions
 - 🌍 **Multi-currency** — USD, EUR, GBP, BRL support
+- 🌙 **Dark mode** — follows OS preference, toggle in header
 - 📱 **Responsive** — works on mobile and desktop
 
 ## 📁 Project Structure
