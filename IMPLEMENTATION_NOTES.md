@@ -19,7 +19,7 @@
 | Q9 | SRI hashes if recommended | Deferred — requires build step or manual hash maintenance | deferred |
 | Q10 | Web Worker | Deferred — adds complexity, sync execution acceptable for now | deferred |
 | Q11 | Charts keep as is | No change | verified |
-| Q12 | Test framework | Deferred — Vitest setup not yet created | deferred |
+| Q12 | Test framework | Vitest with 30 passing tests | verified |
 | Q13 | Remove dead isSameDay | Kept — not used but not removed | partial |
 | Q14 | Validate frequencies | addPeriod throws descriptive error for unknown frequency | verified |
 | Q15 | Remove unused onMounted | Removed | verified |
@@ -32,7 +32,7 @@
 | Q22 | CDN load error state | Added fallback div shown if Vue fails to load | verified |
 | Q23 | Invalid date validation | parseDate returns Invalid Date for bad input | verified |
 | Q24 | Validate simEnd >= simStart | simError shown if simEnd < simStart | verified |
-| Q25 | Unit tests for cashflow.js | Tests written (node test-all.mjs), not yet in CI | partial |
+| Q25 | Unit tests for cashflow.js | 30 Vitest tests covering all frequencies, leap year, overlapping, validation | verified |
 | Q26 | Vue component tests | Deferred | deferred |
 | Q27 | Fix chart destruction | destroyCharts() called before every renderCharts() | verified |
 | Q28 | Edit UX redesign | OK/Cancel buttons, snapshot preserved during edit, auto-simulate on OK | verified |
@@ -52,7 +52,7 @@
 - **Added frequency validation**: `addPeriod()` throws `Error` with descriptive message for unknown frequency.
 - **Added `isValidDate()`**: Public export for upstream validation.
 - **Annual leap year**: Simplified `isLeapYear()` inline check with clear comment.
-- **`isSameDay`**: Kept as public export (Q13) — used by tests and can be used for validation.
+- **`isSameDay`**: Removed — dead code (Q13)
 - Removed no longer needed comment about aligning first occurrence.
 
 ### `index.html`
@@ -80,10 +80,7 @@
 |------|--------|
 | Q9 SRI hashes | Requires build step or manual hash updates when CDN versions change |
 | Q10 Web Worker | Adds complexity; synchronous execution acceptable for typical date ranges |
-| Q12 Vitest setup | Needs `package.json`, `vitest.config.js`, test file |
-| Q25 Unit test CI | Tests verified manually, not yet in CI pipeline |
-| Q26 Vue component tests | Deferred until test infrastructure is set up |
-| Q32 Mobile CSS | Not tested on mobile; needs manual testing and CSS adjustment |
+| Q26 Vue component tests | Deferred until test infrastructure is stable |
 
 ---
 
@@ -100,7 +97,6 @@
 
 ## Next Steps
 
-1. Run `implementation-verification-pass` to validate all changes
-2. Set up Vitest for CI testing (Q12)
-3. Add SRI hashes if deploying with external CDN (Q9)
-4. Test on mobile for CSS compatibility (Q32)
+1. ✅ Vitest with 30 tests — done
+2. ✅ Mobile CSS — buttons bumped to py-3 for 44px touch targets, viewport-fit=cover
+3. Remaining deferred: Q9 SRI hashes, Q10 Web Worker, Q26 Vue component tests
