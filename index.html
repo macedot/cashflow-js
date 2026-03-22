@@ -42,7 +42,7 @@
     <main class="container mx-auto p-4 max-w-6xl">
       <!-- Simulation Period -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-4 gap-3">
           <div>
             <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Start Date</label>
             <input type="date" v-model="simStart"
@@ -55,9 +55,19 @@
             <p v-if="simError" class="error-msg">{{ simError }}</p>
           </div>
           <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Initial Balance ($)</label>
+            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Initial Balance</label>
             <input type="number" v-model.number="initialBalance" step="0.01"
               class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
+          </div>
+          <div>
+            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Portfolio Currency</label>
+            <select v-model="portfolioCurrency"
+              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
+              <option value="USD">USD</option>
+              <option value="EUR">EUR</option>
+              <option value="GBP">GBP</option>
+              <option value="BRL">BRL</option>
+            </select>
           </div>
         </div>
       </div>
@@ -73,13 +83,6 @@
               <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Events ({{ events.length }})</h2>
             </div>
             <div class="flex gap-2 items-center">
-              <select v-model="portfolioCurrency"
-                class="text-sm border rounded px-2 py-1 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                <option value="USD">USD</option>
-                <option value="EUR">EUR</option>
-                <option value="GBP">GBP</option>
-                <option value="BRL">BRL</option>
-              </select>
               <button v-if="events.length > 0" @click="clearEvents"
                 class="text-sm text-red-500 hover:text-red-700 dark:text-red-400">Clear All</button>
               <label class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer">
