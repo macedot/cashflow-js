@@ -277,7 +277,7 @@
         <div class="w-full h-full flex flex-col">
           <div class="flex justify-end mb-2">
             <button @click="chartFullscreen = false"
-              class="text-white text-2xl hover:text-gray-300">&times;</button>
+              class="text-gray-700 dark:text-gray-200 text-2xl hover:text-gray-500 dark:hover:text-gray-400">✕</button>
           </div>
           <div class="flex-1 chart-container">
             <canvas ref="cashflowChartFullscreen"></canvas>
@@ -454,7 +454,14 @@
         const chartFullscreen = ref(false);
 
         // --- Auto-run on mount ---
-        onMounted(autoSimulate);
+        onMounted(() => {
+          autoSimulate();
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && chartFullscreen.value) {
+              chartFullscreen.value = false;
+            }
+          });
+        });
 
         watch([simStart, simEnd, initialBalance], () => { saveSimParams(); autoSimulate(); });
         watch(portfolioCurrency, () => { saveSimParams(); });
