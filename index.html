@@ -66,8 +66,20 @@
       <div class="mb-4">
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
           <div class="flex justify-between items-center mb-3">
-            <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Events ({{ events.length }})</h2>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+              <button @click="toggleEvents" class="text-gray-600 dark:text-gray-300 hover:text-gray-800">
+                <span :class="eventsCollapsed ? 'fold' : ''" class="toggle-icon inline-block w-4 text-center"></span>
+              </button>
+              <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Events ({{ events.length }})</h2>
+            </div>
+            <div class="flex gap-2 items-center">
+              <select v-model="portfolioCurrency"
+                class="text-sm border rounded px-2 py-1 dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="BRL">BRL</option>
+              </select>
               <button v-if="events.length > 0" @click="clearEvents"
                 class="text-sm text-red-500 hover:text-red-700 dark:text-red-400">Clear All</button>
               <label class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer">
@@ -82,7 +94,7 @@
           </div>
           <p v-if="csvError" class="error-msg mb-2">{{ csvError }}</p>
           <p v-if="csvSuccess" class="text-green-600 text-sm mb-2">{{ csvSuccess }}</p>
-          <div class="overflow-x-auto max-h-64 overflow-y-auto">
+          <div v-show="!eventsCollapsed" class="overflow-x-auto max-h-64 overflow-y-auto">
             <table class="w-full text-xs">
               <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
                 <tr>
@@ -112,7 +124,7 @@
                         :class="event.value >= 0 ? 'text-green-600' : 'text-red-600'"
                         @click="startEditEvent(index)">
                       {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
-                      <span v-if="event.currency && event.currency !== 'USD'" class="text-xs text-gray-400">{{ event.currency }}</span>
+                      <span v-if="event.currency && event.currency !== portfolioCurrency" class="text-xs text-gray-400">{{ event.currency }}</span>
                     </td>
                     <td class="px-2 py-1 text-center">
                       <button @click="removeEvent(index)"
@@ -331,6 +343,7 @@
               if (p.simStart) simStart.value = p.simStart;
               if (p.simEnd) simEnd.value = p.simEnd;
               if (p.initialBalance !== undefined) initialBalance.value = p.initialBalance;
+              if (p.portfolioCurrency) portfolioCurrency.value = p.portfolioCurrency;
             }
           } catch {}
         }
@@ -340,6 +353,7 @@
               simStart: simStart.value,
               simEnd: simEnd.value,
               initialBalance: initialBalance.value,
+              portfolioCurrency: portfolioCurrency.value,
             }));
           } catch {}
         }
@@ -361,6 +375,15 @@
         function toggleResults() {
           resultsCollapsed.value = !resultsCollapsed.value;
         }
+
+        // Events collapse
+        const eventsCollapsed = ref(false);
+        function toggleEvents() {
+          eventsCollapsed.value = !eventsCollapsed.value;
+        }
+
+        // Portfolio currency
+        const portfolioCurrency = ref('USD');
 
         // Events — live table with inline editing
         const events = ref(loadFromStorage() || []);
@@ -394,6 +417,7 @@
         onMounted(autoSimulate);
 
         watch([simStart, simEnd, initialBalance], () => { saveSimParams(); autoSimulate(); });
+        watch(portfolioCurrency, () => { saveSimParams(); });
 
         // --- Persistence ---
         function loadFromStorage() {
@@ -749,6 +773,8 @@
           formatDate,
           darkMode, toggleTheme,
           resultsCollapsed, toggleResults,
+          eventsCollapsed, toggleEvents,
+          portfolioCurrency,
         };
       },
     }).mount('#app');
