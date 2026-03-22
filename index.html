@@ -773,7 +773,6 @@
           if (cashflowChartFullscreen.value) {
             const isDark = darkMode.value;
             const textColor = isDark ? '#e5e7eb' : '#374151';
-            const gridColor = isDark ? '#4b5563' : '#d1d5db';
             const fullscreenOptions = JSON.parse(JSON.stringify(chartOptions));
             fullscreenOptions.responsive = true;
             fullscreenOptions.maintainAspectRatio = false;
@@ -781,12 +780,11 @@
               x: {
                 type: 'category',
                 ticks: { maxRotation: 45, minRotation: 45, color: textColor },
-                grid: { color: gridColor },
                 offset: true,
                 categoryPercentage: 0.5,
                 barPercentage: 1.0,
               },
-              y: { beginAtZero: false, ticks: { color: textColor }, grid: { color: gridColor } },
+              y: { beginAtZero: false, ticks: { color: textColor } },
             };
             fullscreenOptions.plugins = {
               legend: {
