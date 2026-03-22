@@ -273,7 +273,7 @@
       </div>
 
       <!-- Chart Fullscreen Overlay -->
-      <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-800 dark:bg-gray-900 m-4">
+      <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 m-4">
         <div class="w-full h-full flex flex-col">
           <div class="flex justify-end mb-2">
             <button @click="chartFullscreen = false"
@@ -747,23 +747,26 @@
             cashflowChartInstance = new Chart(cashflowChart.value, chartConfig);
           }
           if (cashflowChartFullscreen.value) {
+            const isDark = darkMode.value;
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const gridColor = isDark ? '#4b5563' : '#d1d5db';
             const fullscreenOptions = JSON.parse(JSON.stringify(chartOptions));
             fullscreenOptions.responsive = true;
             fullscreenOptions.maintainAspectRatio = false;
             fullscreenOptions.scales = {
               x: {
-                ticks: { maxRotation: 45, minRotation: 45, color: '#e5e7eb' },
-                grid: { color: '#4b5563' },
+                ticks: { maxRotation: 45, minRotation: 45, color: textColor },
+                grid: { color: gridColor },
                 categoryPercentage: 0.5,
                 barPercentage: 1,
               },
-              y: { beginAtZero: false, ticks: { color: '#e5e7eb' }, grid: { color: '#4b5563' } },
+              y: { beginAtZero: false, ticks: { color: textColor }, grid: { color: gridColor } },
             };
             fullscreenOptions.plugins = {
               legend: {
                 display: true,
                 position: 'top',
-                labels: { color: '#e5e7eb' },
+                labels: { color: textColor },
               },
             };
             const fullscreenConfig = JSON.parse(JSON.stringify(chartConfig));
