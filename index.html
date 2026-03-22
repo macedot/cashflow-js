@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>CashflowSim</title>
   <script>
-    tailwindDarkMode = 'class';
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       document.documentElement.classList.add('dark');
     }
@@ -17,10 +16,89 @@
   <style>
     [v-cloak] { display: none; }
     .chart-container { position: relative; height: 300px; }
-    .error-msg { color: #dc2626; font-size: 0.875rem; margin-top: 0.25rem; }
+    .error-msg { color: var(--color-error); font-size: 0.875rem; margin-top: 0.25rem; }
     .toggle-icon::before { color: inherit; }
     .toggle-icon.fold::after { content: '▶'; color: inherit; }
     .toggle-icon:not(.fold)::after { content: '▼'; color: inherit; }
+
+    /* CSS custom properties for theming — dark mode via .dark class */
+    :root {
+      --color-bg: #f3f4f6;
+      --color-surface: #ffffff;
+      --color-border: #d1d5db;
+      --color-text: #1f2937;
+      --color-text-muted: #6b7280;
+      --color-blue: #2563eb;
+      --color-green: #16a34a;
+      --color-red: #dc2626;
+      --color-error-bg: #fef2f2;
+      --color-error-text: #dc2626;
+      --color-input-bg: #ffffff;
+      --color-input-text: #1f2937;
+      --color-input-border: #d1d5db;
+      --color-table-header-bg: #f3f4f6;
+      --color-table-row-bg: #f9fafb;
+      --color-hover-bg: #eff6ff;
+      --color-edit-bg: #eff6ff;
+    }
+    .dark {
+      --color-bg: #111827;
+      --color-surface: #1f2937;
+      --color-border: #4b5563;
+      --color-text: #f3f4f6;
+      --color-text-muted: #9ca3af;
+      --color-blue: #3b82f6;
+      --color-green: #22c55e;
+      --color-red: #f87171;
+      --color-error-bg: #7f1d1d;
+      --color-error-text: #fca5a5;
+      --color-input-bg: #374151;
+      --color-input-text: #f3f4f6;
+      --color-input-border: #4b5563;
+      --color-table-header-bg: #374151;
+      --color-table-row-bg: #1f2937;
+      --color-hover-bg: #1e3a5f;
+      --color-edit-bg: #1e3a5f;
+    }
+
+    /* Apply theme colors to body and main containers */
+    body { background-color: var(--color-bg); color: var(--color-text); }
+    header { background-color: var(--color-surface); color: #fff; }
+    .bg-white { background-color: var(--color-surface); }
+    .text-gray-700 { color: var(--color-text); }
+    .text-gray-200 { color: var(--color-text-muted); }
+    .text-gray-300 { color: var(--color-text-muted); }
+    .text-gray-400 { color: var(--color-text-muted); }
+    .text-gray-500 { color: var(--color-text-muted); }
+    .text-gray-600 { color: var(--color-text-muted); }
+    .text-black { color: var(--color-text); }
+    .dark\:text-white { color: #fff; }
+    .border-gray-200 { border-color: var(--color-border); }
+    .border-gray-300 { border-color: var(--color-border); }
+    .border-gray-600 { border-color: var(--color-border); }
+    .dark\:border-gray-600 { border-color: var(--color-border); }
+    .bg-gray-50 { background-color: var(--color-table-row-bg); }
+    .bg-gray-100 { background-color: var(--color-table-header-bg); }
+    .dark\:bg-gray-700 { background-color: var(--color-table-header-bg); }
+    .dark\:bg-gray-800 { background-color: var(--color-surface); }
+    .dark\:bg-gray-900 { background-color: var(--color-edit-bg); }
+    .dark\:hover\:bg-blue-800:hover { background-color: var(--color-hover-bg); }
+    .dark\:hover\:bg-gray-600:hover { background-color: var(--color-border); }
+    .dark\:bg-red-900 { background-color: var(--color-error-bg); }
+    .dark\:text-red-200 { color: var(--color-error-text); }
+    .dark\:text-red-400 { color: var(--color-red); }
+    .dark\:hover\:text-red-300:hover { color: var(--color-red); }
+    .dark\:text-blue-400 { color: var(--color-blue); }
+    .dark\:hover\:text-blue-300:hover { color: var(--color-blue); }
+    .dark\:text-green-400 { color: var(--color-green); }
+    .dark\:hover\:text-green-300:hover { color: var(--color-green); }
+    .dark\:text-gray-400 { color: var(--color-text-muted); }
+    .dark\:hover\:text-gray-300:hover { color: var(--color-text-muted); }
+    .dark\:text-gray-200 { color: var(--color-text-muted); }
+    .dark\:bg-blue-900 { background-color: var(--color-edit-bg); }
+    input, select { background-color: var(--color-input-bg); color: var(--color-input-text); border-color: var(--color-input-border); }
+    .dark\:bg-gray-700 { background-color: var(--color-input-bg); }
+    .dark\:bg-gray-600 { background-color: var(--color-border); }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen">
