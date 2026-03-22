@@ -730,11 +730,13 @@
                   label: 'Income',
                   data: incomeData,
                   backgroundColor: 'rgba(34, 197, 94, 1)',
+                  order: -1,
                 },
                 {
                   label: 'Expense',
                   data: expenseData,
                   backgroundColor: 'rgba(239, 68, 68, 1)',
+                  order: -1,
                 },
                 {
                   label: 'Balance',
@@ -746,6 +748,8 @@
                   stepped: 'before',
                   tension: 0,
                   pointRadius: 0,
+                  pointHoverRadius: 6,
+                  pointHoverBackgroundColor: 'rgb(59, 130, 246)',
                   order: 1,
                 },
               ],
