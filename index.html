@@ -88,8 +88,8 @@
                 <tr>
                   <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Name</th>
                   <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Period</th>
-                  <th class="px-2 py-1 text-right text-gray-700 dark:text-gray-200">Value</th>
                   <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Freq</th>
+                  <th class="px-2 py-1 text-right text-gray-700 dark:text-gray-200">Value</th>
                   <th class="px-2 py-1 text-center text-gray-700 dark:text-gray-200">Remove?</th>
                 </tr>
               </thead>
@@ -106,14 +106,14 @@
                         @click="startEditEvent(index)">
                       {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
                     </td>
+                    <td class="px-2 py-1 text-gray-400 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        @click="startEditEvent(index)">{{ event.frequency }}</td>
                     <td class="px-2 py-1 text-right cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
                         :class="event.value >= 0 ? 'text-green-600' : 'text-red-600'"
                         @click="startEditEvent(index)">
                       {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
                       <span v-if="event.currency && event.currency !== 'USD'" class="text-xs text-gray-400">{{ event.currency }}</span>
                     </td>
-                    <td class="px-2 py-1 text-gray-400 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
-                        @click="startEditEvent(index)">{{ event.frequency }}</td>
                     <td class="px-2 py-1 text-center">
                       <button @click="removeEvent(index)"
                         class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs px-1">X</button>
@@ -131,26 +131,13 @@
                     <td class="px-1 py-1">
                       <div class="flex items-center gap-1">
                         <input type="date" v-model="editDraft.startDate"
-                          class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                          class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
                           :class="formError.startDate ? 'border-red-500' : ''">
                         <span class="text-gray-400">-</span>
                         <input type="date" v-model="editDraft.endDate"
-                          class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                          class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
                       </div>
                       <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
-                    </td>
-                    <td class="px-1 py-1">
-                      <div class="flex items-center justify-end gap-1">
-                        <input type="number" v-model.number="editDraft.value" step="0.01"
-                          class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                        <select v-model="editDraft.currency"
-                          class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                          <option value="USD">USD</option>
-                          <option value="EUR">EUR</option>
-                          <option value="GBP">GBP</option>
-                          <option value="BRL">BRL</option>
-                        </select>
-                      </div>
                     </td>
                     <td class="px-1 py-1">
                       <select v-model="editDraft.frequency"
@@ -166,6 +153,19 @@
                         <option value="annual">Annual</option>
                       </select>
                       <p v-if="formError.frequency" class="error-msg text-xs">{{ formError.frequency }}</p>
+                    </td>
+                    <td class="px-1 py-1">
+                      <div class="flex items-center justify-end gap-1">
+                        <input type="number" v-model.number="editDraft.value" step="0.01"
+                          class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                        <select v-model="editDraft.currency"
+                          class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                          <option value="USD">USD</option>
+                          <option value="EUR">EUR</option>
+                          <option value="GBP">GBP</option>
+                          <option value="BRL">BRL</option>
+                        </select>
+                      </div>
                     </td>
                     <td class="px-1 py-1 text-center">
                       <button @click="saveEditEvent"
@@ -185,27 +185,13 @@
                   <td class="px-1 py-1">
                     <div class="flex items-center gap-1">
                       <input type="date" v-model="newEventDraft.startDate"
-                        class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
                         :class="formError.startDate ? 'border-red-500' : ''">
                       <span class="text-gray-400">-</span>
                       <input type="date" v-model="newEventDraft.endDate"
-                        class="w-24 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                        class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
                     </div>
                     <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
-                  </td>
-                  <td class="px-1 py-1">
-                    <div class="flex items-center justify-end gap-1">
-                      <input type="number" v-model.number="newEventDraft.value" step="0.01"
-                        class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        placeholder="0.00">
-                      <select v-model="newEventDraft.currency"
-                        class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                        <option value="BRL">BRL</option>
-                      </select>
-                    </div>
                   </td>
                   <td class="px-1 py-1">
                     <select v-model="newEventDraft.frequency"
@@ -221,6 +207,20 @@
                       <option value="annual">Annual</option>
                     </select>
                     <p v-if="formError.frequency" class="error-msg text-xs">{{ formError.frequency }}</p>
+                  </td>
+                  <td class="px-1 py-1">
+                    <div class="flex items-center justify-end gap-1">
+                      <input type="number" v-model.number="newEventDraft.value" step="0.01"
+                        class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                        placeholder="0.00">
+                      <select v-model="newEventDraft.currency"
+                        class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="BRL">BRL</option>
+                      </select>
+                    </div>
                   </td>
                   <td class="px-1 py-1 text-center">
                     <button @click="saveNewEvent"
