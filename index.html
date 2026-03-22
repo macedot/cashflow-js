@@ -753,7 +753,13 @@
           };
 
           if (cashflowChart.value) {
-            cashflowChartInstance = new Chart(cashflowChart.value, chartConfig);
+            // Apply bar spacing per dataset
+            const inlineConfig = JSON.parse(JSON.stringify(chartConfig));
+            inlineConfig.data.datasets[0].barPercentage = 1.0;
+            inlineConfig.data.datasets[0].categoryPercentage = 0.5;
+            inlineConfig.data.datasets[1].barPercentage = 1.0;
+            inlineConfig.data.datasets[1].categoryPercentage = 0.5;
+            cashflowChartInstance = new Chart(cashflowChart.value, inlineConfig);
           }
           if (cashflowChartFullscreen.value) {
             const isDark = darkMode.value;
