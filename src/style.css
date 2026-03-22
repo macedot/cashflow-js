@@ -1,5 +1,5 @@
     [v-cloak] { display: none; }
-    .chart-container { position: relative; height: 300px; }
+    .chart-container { position: relative; height: 300px; width: 100%; }
     .error-msg { color: var(--color-error); font-size: 0.875rem; margin-top: 0.25rem; }
     .toggle-icon::before { color: inherit; }
     .toggle-icon.fold::after { content: '▶'; color: inherit; }
