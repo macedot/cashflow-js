@@ -258,7 +258,7 @@
           <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Cashflow & Balance Over Time</h2>
           <div class="flex gap-2">
             <button @click="chartFullscreen = !chartFullscreen"
-              class="text-sm bg-gray-600 text-white px-3 py-1 rounded hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-500">
+              class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
               {{ chartFullscreen ? '⊠' : '⛶' }}
             </button>
             <button @click="exportResultsCSV"
@@ -273,8 +273,8 @@
       </div>
 
       <!-- Chart Fullscreen Overlay -->
-      <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900">
-        <div class="w-full max-w-6xl h-full flex flex-col p-4">
+      <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900 m-4">
+        <div class="w-full max-w-6xl h-full flex flex-col">
           <div class="flex justify-end mb-2">
             <button @click="chartFullscreen = false"
               class="text-white text-2xl hover:text-gray-300">&times;</button>
