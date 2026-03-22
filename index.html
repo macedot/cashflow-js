@@ -765,8 +765,6 @@
               x: {
                 ticks: { maxRotation: 45, minRotation: 45, color: textColor },
                 grid: { color: gridColor },
-                categoryPercentage: 0.5,
-                barPercentage: 1.0,
               },
               y: { beginAtZero: false, ticks: { color: textColor }, grid: { color: gridColor } },
             };
@@ -778,6 +776,11 @@
               },
             };
             const fullscreenConfig = JSON.parse(JSON.stringify(chartConfig));
+            // Set bar spacing per dataset for fullscreen
+            fullscreenConfig.data.datasets[0].barPercentage = 1.0;
+            fullscreenConfig.data.datasets[0].categoryPercentage = 0.5;
+            fullscreenConfig.data.datasets[1].barPercentage = 1.0;
+            fullscreenConfig.data.datasets[1].categoryPercentage = 0.5;
             fullscreenConfig.options = fullscreenOptions;
             cashflowChartFullscreenInstance = new Chart(cashflowChartFullscreen.value, fullscreenConfig);
           }
