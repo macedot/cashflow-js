@@ -47,30 +47,30 @@ Reviewed the implementation against `QUESTIONS.md` answers and `IMPLEMENTATION_N
 - **Risk:** Low — user would have to intentionally clear required fields
 - **Decision:** Acceptable given current validation scope
 
-**Deferred items correctly deferred** (Q9, Q10, Q12, Q25, Q26, Q32) — no action taken, correctly documented.
-
 ---
 
 ## Alignment with QUESTIONS.md
+
+All 33 items reviewed. Status after fixes applied in this session:
 
 | # | Answer | Implementation | Status |
 |---|--------|---------------|--------|
 | Q1 | show error | `simError` shown when simEnd < simStart | ✅ verified |
 | Q2 | allow duplication | No change | ✅ verified |
-| Q3 | name is required | validateForm does NOT check name | ❌ **NOT implemented** |
+| Q3 | name is required | `validateForm()` checks non-empty name | ✅ verified |
 | Q4 | OK, optimize later | Zero-value allowed | ✅ verified |
 | Q5 | every day needs balance | Continuous daily entries | ✅ verified |
 | Q6 | simStart day 0 | Included | ✅ verified |
 | Q7 | localStorage | Implemented | ✅ verified |
 | Q8 | no hard limits | No change | ✅ verified |
-| Q9 | SRI if recommended | Deferred | ✅ deferred |
-| Q10 | Web Worker | Deferred | ✅ deferred |
+| Q9 | SRI if recommended | Deferred | deferred |
+| Q10 | Web Worker | Deferred | deferred |
 | Q11 | charts keep | No change | ✅ verified |
-| Q12 | Vitest | Deferred | ✅ deferred |
-| Q13 | remove isSameDay | Kept, mislabeled partial | ⚠️ partial/misclassified |
+| Q12 | Vitest | 30 tests, `npm test` in CI | ✅ verified |
+| Q13 | remove isSameDay | Removed — dead code | ✅ verified |
 | Q14 | validate frequencies | Throws descriptive error | ✅ verified |
 | Q15 | remove onMounted | Removed | ✅ verified |
-| Q16 | cancelEdit resets all | Now resets all fields | ✅ verified |
+| Q16 | cancelEdit resets all | Resets all fields | ✅ verified |
 | Q17 | CSV quoting | escape helper added | ✅ verified |
 | Q18 | CSV skip count | Reports imported/skipped | ✅ verified |
 | Q19 | CSV validate finite | isNaN check | ✅ verified |
@@ -79,14 +79,14 @@ Reviewed the implementation against `QUESTIONS.md` answers and `IMPLEMENTATION_N
 | Q22 | CDN error state | Fallback div added | ✅ verified |
 | Q23 | invalid date validation | Invalid Date propagates | ✅ verified |
 | Q24 | simEnd >= simStart | Enforced with error | ✅ verified |
-| Q25 | unit tests | Manual only, not CI | ⚠️ partial |
-| Q26 | Vue tests | Deferred | ✅ deferred |
+| Q25 | unit tests | 30 Vitest tests, all frequencies | ✅ verified |
+| Q26 | Vue tests | Deferred | deferred |
 | Q27 | fix chart destroy | Fixed | ✅ verified |
 | Q28 | edit UX redesign | OK/Cancel/snapshot | ✅ verified |
 | Q29 | leap year fix | Verified correct | ✅ verified |
 | Q30 | "entries" not "days" | Fixed | ✅ verified |
 | Q31 | currency field | USD/EUR/GBP/BRL | ✅ verified |
-| Q32 | mobile | Deferred | ✅ deferred |
+| Q32 | mobile | Buttons py-3 (44px), viewport-fit=cover | ✅ verified |
 | Q33 | frequency lowercase | Already correct | ✅ verified |
 
 ---
