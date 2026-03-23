@@ -477,12 +477,14 @@
         const resultsCollapsed = ref(true);
         function toggleResults() {
           resultsCollapsed.value = !resultsCollapsed.value;
+          saveSimParams();
         }
 
         // Events collapse
         const eventsCollapsed = ref(false);
         function toggleEvents() {
           eventsCollapsed.value = !eventsCollapsed.value;
+          saveSimParams();
         }
 
         // Portfolio currency
