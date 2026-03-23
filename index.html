@@ -456,7 +456,9 @@
         const events = ref(loadFromStorage() || []);
         const editingEventIndex = ref(null); // which row is being edited
         const editDraft = reactive({ name: '', startDate: '', endDate: '', frequency: '', value: 0, currency: 'USD' });
-        const newEventDraft = reactive({ name: '', startDate: '2025-01-01', endDate: '2025-12-31', frequency: '', value: 0, currency: 'USD' });
+        const _today = new Date();
+        const _oneYear = new Date(_today.getFullYear() + 1, _today.getMonth(), _today.getDate());
+        const newEventDraft = reactive({ name: '', startDate: formatDate(_today), endDate: formatDate(_oneYear), frequency: '', value: 0, currency: 'USD' });
         const formError = reactive({ name: '', startDate: '', frequency: '' });
 
         // Results
@@ -624,9 +626,11 @@
           });
           saveToStorage();
           // Reset new event draft
+          const t = new Date();
+          const y = new Date(t.getFullYear() + 1, t.getMonth(), t.getDate());
           newEventDraft.name = '';
-          newEventDraft.startDate = '2025-01-01';
-          newEventDraft.endDate = '2025-12-31';
+          newEventDraft.startDate = formatDate(t);
+          newEventDraft.endDate = formatDate(y);
           newEventDraft.frequency = '';
           newEventDraft.value = 0;
           newEventDraft.currency = 'USD';
