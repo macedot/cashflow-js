@@ -456,9 +456,7 @@
         const events = ref(loadFromStorage() || []);
         const editingEventIndex = ref(null); // which row is being edited
         const editDraft = reactive({ name: '', startDate: '', endDate: '', frequency: '', value: 0, currency: 'USD' });
-        const _today = new Date();
-        const _oneYear = new Date(_today.getFullYear() + 1, _today.getMonth(), _today.getDate());
-        const newEventDraft = reactive({ name: '', startDate: formatDate(_today), endDate: formatDate(_oneYear), frequency: '', value: 0, currency: 'USD' });
+        const newEventDraft = reactive({ name: '', startDate: formatDate(new Date()), endDate: '', frequency: '', value: 0, currency: 'USD' });
         const formError = reactive({ name: '', startDate: '', frequency: '' });
 
         // Results
@@ -595,7 +593,7 @@
             events.value[editingEventIndex.value] = {
               name: editDraft.name.trim(),
               startDate: editDraft.startDate,
-              endDate: editDraft.endDate || editDraft.startDate,
+              endDate: editDraft.endDate || '',
               frequency: editDraft.frequency,
               value: parseFloat(editDraft.value) || 0,
               currency: editDraft.currency || 'USD',
@@ -619,18 +617,16 @@
           events.value.push({
             name: newEventDraft.name.trim(),
             startDate: newEventDraft.startDate,
-            endDate: newEventDraft.endDate || newEventDraft.startDate,
+            endDate: newEventDraft.endDate || '',
             frequency: newEventDraft.frequency,
             value: parseFloat(newEventDraft.value) || 0,
             currency: newEventDraft.currency || 'USD',
           });
           saveToStorage();
           // Reset new event draft
-          const t = new Date();
-          const y = new Date(t.getFullYear() + 1, t.getMonth(), t.getDate());
           newEventDraft.name = '';
-          newEventDraft.startDate = formatDate(t);
-          newEventDraft.endDate = formatDate(y);
+          newEventDraft.startDate = formatDate(new Date());
+          newEventDraft.endDate = '';
           newEventDraft.frequency = '';
           newEventDraft.value = 0;
           newEventDraft.currency = 'USD';

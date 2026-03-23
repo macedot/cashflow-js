@@ -125,12 +125,14 @@ function addPeriod(date, frequency) {
 export function generateEventCashflows(event, simStart, simEnd) {
   const result = [];
   const startDate = parseDate(event.startDate);
-  const endDate = parseDate(event.endDate);
+  // If no endDate, use simEnd as the boundary
+  const hasEndDate = event.endDate && event.endDate.trim() !== '';
+  const endDate = hasEndDate ? parseDate(event.endDate) : null;
 
   // Determine effective start: max(event.startDate, simStart)
   const effectiveStart = startDate > simStart ? startDate : simStart;
-  // Determine effective end: min(event.endDate, simEnd)
-  const effectiveEnd = endDate < simEnd ? endDate : simEnd;
+  // Determine effective end: min(event.endDate, simEnd) or just simEnd if no endDate
+  const effectiveEnd = hasEndDate ? (endDate < simEnd ? endDate : simEnd) : simEnd;
 
   // If the effective range is invalid, return empty
   if (effectiveStart > effectiveEnd) {
