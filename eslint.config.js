@@ -61,6 +61,7 @@ export default [
       'no-delete-var': 'error',
       'no-undef': 'error',
       'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
+      'complexity': ['error', { max: 10 }],
     },
   },
 ];

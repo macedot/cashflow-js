@@ -15,6 +15,29 @@ export const FREQUENCIES = {
 const VALID_FREQUENCIES = new Set(Object.values(FREQUENCIES));
 
 /**
+ * Calculate the next month and year when adding months, handling overflow
+ * @param {number} currentMonth - 0-indexed month
+ * @param {number} currentYear - Full year
+ * @param {number} monthsToAdd - Number of months to add
+ * @returns {{year: number, month: number}}
+ */
+function getNextMonthYear(currentMonth, currentYear, monthsToAdd) {
+  const nextMonth = currentMonth + monthsToAdd;
+  const nextYear = nextMonth > 11 ? currentYear + 1 : currentYear;
+  const monthNormalized = nextMonth % 12;
+  return { year: nextYear, month: monthNormalized };
+}
+
+/**
+ * Check if a year is a leap year
+ * @param {number} year
+ * @returns {boolean}
+ */
+function isLeapYear(year) {
+  return new Date(year, 1, 29).getMonth() === 1;
+}
+
+/**
  * @typedef {Object} Event
  * @property {string} name
  * @property {Date|string} startDate
@@ -82,34 +105,24 @@ function addPeriod(date, frequency) {
     case FREQUENCIES.WEEKLY:
       return new Date(year, month, day + 7);
     case FREQUENCIES.MONTHLY: {
-      // Handle month overflow (e.g., Jan 31 + 1 month = Feb 28/29)
-      const nextMonth = month + 1;
-      const nextYear = nextMonth > 11 ? year + 1 : year;
-      const nextMonthNormalized = nextMonth % 12;
-      const daysInNextMonth = new Date(nextYear, nextMonthNormalized + 1, 0).getDate();
+      const { year: nextYear, month: nextMonth } = getNextMonthYear(month, year, 1);
+      const daysInNextMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
       const nextDay = Math.min(day, daysInNextMonth);
-      return new Date(nextYear, nextMonthNormalized, nextDay);
+      return new Date(nextYear, nextMonth, nextDay);
     }
     case FREQUENCIES.QUARTERLY: {
-      const nextMonth = month + 3;
-      const nextYear = nextMonth > 11 ? year + 1 : year;
-      const nextMonthNormalized = nextMonth % 12;
-      const daysInNextMonth = new Date(nextYear, nextMonthNormalized + 1, 0).getDate();
+      const { year: nextYear, month: nextMonth } = getNextMonthYear(month, year, 3);
+      const daysInNextMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
       const nextDay = Math.min(day, daysInNextMonth);
-      return new Date(nextYear, nextMonthNormalized, nextDay);
+      return new Date(nextYear, nextMonth, nextDay);
     }
     case FREQUENCIES.SEMI_ANNUAL: {
-      const nextMonth = month + 6;
-      const nextYear = nextMonth > 11 ? year + 1 : year;
-      const nextMonthNormalized = nextMonth % 12;
-      const daysInNextMonth = new Date(nextYear, nextMonthNormalized + 1, 0).getDate();
+      const { year: nextYear, month: nextMonth } = getNextMonthYear(month, year, 6);
+      const daysInNextMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
       const nextDay = Math.min(day, daysInNextMonth);
-      return new Date(nextYear, nextMonthNormalized, nextDay);
+      return new Date(nextYear, nextMonth, nextDay);
     }
     case FREQUENCIES.ANNUAL: {
-      // If starting on Feb 29 and next year is not a leap year, roll back to Feb 28
-      /** @param {number} y */
-      const isLeapYear = (y) => new Date(y, 1, 29).getMonth() === 1;
       const nextYear = year + 1;
       const nextDay = (day === 29 && !isLeapYear(nextYear)) ? 28 : day;
       return new Date(nextYear, month, nextDay);
@@ -127,6 +140,31 @@ function addPeriod(date, frequency) {
  */
 
 /**
+ * Get the end date from an event, or return null if no end date
+ * @param {Event['endDate']} endDate
+ * @returns {Date | null}
+ */
+function getEventEndDate(endDate) {
+  if (typeof endDate === 'string' && endDate.trim() !== '') {
+    return parseDate(endDate);
+  }
+  return null;
+}
+
+/**
+ * Determine the effective end date for the simulation
+ * @param {Date | null} eventEnd
+ * @param {Date} simulationEnd
+ * @returns {Date}
+ */
+function getEffectiveEnd(eventEnd, simulationEnd) {
+  if (eventEnd !== null && eventEnd < simulationEnd) {
+    return eventEnd;
+  }
+  return simulationEnd;
+}
+
+/**
  * Generate all occurrences of a single event within the simulation range.
  * Returns array of {date, value, name} objects.
  *
@@ -136,30 +174,17 @@ function addPeriod(date, frequency) {
  * @returns {CashflowOccurrence[]}
  */
 export function generateEventCashflows(event, simStart, simEnd) {
-  /** @type {CashflowOccurrence[]} */
-  const result = [];
   const startDate = parseDate(event.startDate);
-  // If no endDate, use simEnd as the boundary
-  const hasEndDate = typeof event.endDate === 'string' && event.endDate.trim() !== '';
-  /** @type {Date | null} */
-  const endDate = hasEndDate ? parseDate(/** @type {string} */ (event.endDate)) : null;
+  const eventEnd = getEventEndDate(event.endDate);
 
-  // Determine effective end: min(event.endDate, simEnd) or just simEnd if no endDate
-  /** @type {Date} */
-  let effectiveEnd;
-  if (hasEndDate && endDate !== null) {
-    effectiveEnd = endDate < simEnd ? endDate : simEnd;
-  } else {
-    effectiveEnd = simEnd;
+  // If the event ends before simulation starts, return empty
+  if (eventEnd !== null && eventEnd < simStart) {
+    return [];
   }
 
-  // If the event ends before simStart, return empty
-  if (hasEndDate && endDate !== null && endDate < simStart) {
-    return result;
-  }
+  const effectiveEnd = getEffectiveEnd(eventEnd, simEnd);
 
   // Find the first occurrence on or after simStart
-  // Start from event.startDate and advance until we reach or pass simStart
   let currentDate = new Date(startDate);
   while (currentDate < simStart) {
     currentDate = addPeriod(currentDate, event.frequency);
@@ -167,17 +192,18 @@ export function generateEventCashflows(event, simStart, simEnd) {
 
   // If the first occurrence is after effectiveEnd, return empty
   if (currentDate > effectiveEnd) {
-    return result;
+    return [];
   }
 
   // Generate all occurrences
+  /** @type {CashflowOccurrence[]} */
+  const result = [];
   while (currentDate <= effectiveEnd) {
     result.push({
       date: new Date(currentDate),
       value: event.value,
       name: event.name,
     });
-
     currentDate = addPeriod(currentDate, event.frequency);
   }
 
