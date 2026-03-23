@@ -15,7 +15,11 @@ export const FREQUENCIES = {
 const VALID_FREQUENCIES = new Set(Object.values(FREQUENCIES));
 
 /**
+<<<<<<< add-code-quality-tools
+ * Get the next month and year when adding months, handling overflow
+=======
  * Calculate the next month and year when adding months, handling overflow
+>>>>>>> master
  * @param {number} currentMonth - 0-indexed month
  * @param {number} currentYear - Full year
  * @param {number} monthsToAdd - Number of months to add
@@ -92,7 +96,9 @@ export function parseDate(dateStr) {
  */
 function addPeriod(date, frequency) {
   if (!VALID_FREQUENCIES.has(frequency)) {
-    throw new Error(`Invalid frequency: "${frequency}". Must be one of: ${[...VALID_FREQUENCIES].join(', ')}`);
+    throw new Error(
+      `Invalid frequency: "${frequency}". Must be one of: ${[...VALID_FREQUENCIES].join(', ')}`
+    );
   }
 
   const year = date.getFullYear();
@@ -124,7 +130,7 @@ function addPeriod(date, frequency) {
     }
     case FREQUENCIES.ANNUAL: {
       const nextYear = year + 1;
-      const nextDay = (day === 29 && !isLeapYear(nextYear)) ? 28 : day;
+      const nextDay = day === 29 && !isLeapYear(nextYear) ? 28 : day;
       return new Date(nextYear, month, nextDay);
     }
     default:
@@ -140,11 +146,19 @@ function addPeriod(date, frequency) {
  */
 
 /**
+<<<<<<< add-code-quality-tools
+ * Get the event end date or null if not set
+ * @param {Event['endDate']} endDate
+ * @returns {Date | null}
+ */
+function getEventEnd(endDate) {
+=======
  * Get the end date from an event, or return null if no end date
  * @param {Event['endDate']} endDate
  * @returns {Date | null}
  */
 function getEventEndDate(endDate) {
+>>>>>>> master
   if (typeof endDate === 'string' && endDate.trim() !== '') {
     return parseDate(endDate);
   }
@@ -152,7 +166,11 @@ function getEventEndDate(endDate) {
 }
 
 /**
+<<<<<<< add-code-quality-tools
+ * Get the effective end date for the simulation
+=======
  * Determine the effective end date for the simulation
+>>>>>>> master
  * @param {Date | null} eventEnd
  * @param {Date} simulationEnd
  * @returns {Date}
@@ -165,6 +183,24 @@ function getEffectiveEnd(eventEnd, simulationEnd) {
 }
 
 /**
+<<<<<<< add-code-quality-tools
+ * Find the first occurrence date on or after a given date
+ * @param {Date} startDate
+ * @param {Date} targetStart
+ * @param {string} frequency
+ * @returns {Date}
+ */
+function findFirstOccurrence(startDate, targetStart, frequency) {
+  let currentDate = new Date(startDate);
+  while (currentDate < targetStart) {
+    currentDate = addPeriod(currentDate, frequency);
+  }
+  return currentDate;
+}
+
+/**
+=======
+>>>>>>> master
  * Generate all occurrences of a single event within the simulation range.
  * Returns array of {date, value, name} objects.
  *
@@ -175,14 +211,26 @@ function getEffectiveEnd(eventEnd, simulationEnd) {
  */
 export function generateEventCashflows(event, simStart, simEnd) {
   const startDate = parseDate(event.startDate);
+<<<<<<< add-code-quality-tools
+  const eventEnd = getEventEnd(event.endDate);
+
+  // If event ends before simulation starts, return empty
+=======
   const eventEnd = getEventEndDate(event.endDate);
 
   // If the event ends before simulation starts, return empty
+>>>>>>> master
   if (eventEnd !== null && eventEnd < simStart) {
     return [];
   }
 
   const effectiveEnd = getEffectiveEnd(eventEnd, simEnd);
+<<<<<<< add-code-quality-tools
+  const firstOccurrence = findFirstOccurrence(startDate, simStart, event.frequency);
+
+  // If first occurrence is after effective end, return empty
+  if (firstOccurrence > effectiveEnd) {
+=======
 
   // Find the first occurrence on or after simStart
   let currentDate = new Date(startDate);
@@ -192,12 +240,18 @@ export function generateEventCashflows(event, simStart, simEnd) {
 
   // If the first occurrence is after effectiveEnd, return empty
   if (currentDate > effectiveEnd) {
+>>>>>>> master
     return [];
   }
 
   // Generate all occurrences
   /** @type {CashflowOccurrence[]} */
   const result = [];
+<<<<<<< add-code-quality-tools
+  let currentDate = new Date(firstOccurrence);
+
+=======
+>>>>>>> master
   while (currentDate <= effectiveEnd) {
     result.push({
       date: new Date(currentDate),

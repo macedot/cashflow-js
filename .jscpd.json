@@ -1,0 +1,10 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jscpd/jscpd/master/packages/jscpd-core/src/config/schema.json",
+  "platform": "github",
+  "threshold": 3,
+  "reporters": ["console"],
+  "ignore": ["**/node_modules/**", "**/coverage/**", "**/*.test.js"],
+  "absolute": true,
+  "output": "./report/cpd/",
+  "format": ["javascript", "typescript"]
+}

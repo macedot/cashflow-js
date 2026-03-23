@@ -1,8 +1,12 @@
 import eslint from '@eslint/js';
+import boundaries from 'eslint-plugin-boundaries';
 
 export default [
   eslint.configs.recommended,
   {
+    plugins: {
+      boundaries,
+    },
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
@@ -12,9 +16,7 @@ export default [
         document: 'readonly',
         localStorage: 'readonly',
         setTimeout: 'readonly',
-        setInterval: 'readonly',
         clearTimeout: 'readonly',
-        clearInterval: 'readonly',
         Promise: 'readonly',
         Map: 'readonly',
         Set: 'readonly',
@@ -30,8 +32,6 @@ export default [
         isFinite: 'readonly',
         parseInt: 'readonly',
         parseFloat: 'readonly',
-        setInterval: 'readonly',
-        clearInterval: 'readonly',
       },
     },
     rules: {
@@ -44,8 +44,8 @@ export default [
       'no-proto': 'error',
       'no-script-url': 'error',
       'no-with': 'error',
-      'eqeqeq': ['error', 'always'],
-      'curly': ['error', 'all'],
+      eqeqeq: ['error', 'always'],
+      curly: ['error', 'all'],
       'default-case': 'error',
       'default-case-last': 'error',
       'no-empty-function': 'error',
@@ -57,11 +57,22 @@ export default [
       'consistent-return': 'error',
       'require-await': 'error',
       'no-return-await': 'error',
-      'yoda': 'error',
+      yoda: 'error',
       'no-delete-var': 'error',
       'no-undef': 'error',
       'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
+<<<<<<< add-code-quality-tools
+      complexity: ['error', { max: 10 }],
+      'max-lines': ['error', { max: 600 }],
+      'boundaries/element-types': 'error',
+    },
+    settings: {
+      boundaries: {
+        elements: ['src/**'],
+      },
+=======
       'complexity': ['error', { max: 10 }],
+>>>>>>> master
     },
   },
 ];
