@@ -284,6 +284,7 @@
       </div>
 
       <!-- Chart Fullscreen Overlay -->
+      <Transition name="fade">
       <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 m-4">
         <div class="w-full h-full bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col p-4">
           <div class="flex justify-between items-center mb-3">
@@ -296,6 +297,7 @@
           </div>
         </div>
       </div>
+      </Transition>
 
       <!-- Results Table (collapsible) -->
       <div class="mt-4">
