@@ -47,7 +47,9 @@ export function isValidDate(d) {
  * @returns {Date}
  */
 export function parseDate(dateStr) {
-  if (dateStr instanceof Date) return new Date(dateStr);
+  if (dateStr instanceof Date) {
+    return new Date(dateStr);
+  }
   // Handle YYYY-MM-DD format specially to avoid UTC timezone issues
   if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     const [y, m, d] = dateStr.split('-').map(Number);
@@ -197,7 +199,7 @@ export function runSimulation(events, initialBalance, simStart, simEnd) {
   // Build continuous daily results from simStart to simEnd
   const results = [];
   let balance = initialBalance;
-  let current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+  const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
   const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 
   while (current <= endDay) {
@@ -209,14 +211,14 @@ export function runSimulation(events, initialBalance, simStart, simEnd) {
       results.push({
         date: new Date(current),
         cashflow: entry.cashflow,
-        balance: balance,
+        balance,
         items: [...entry.items],
       });
     } else {
       results.push({
         date: new Date(current),
         cashflow: 0,
-        balance: balance,
+        balance,
         items: [],
       });
     }

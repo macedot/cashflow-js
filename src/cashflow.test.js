@@ -5,14 +5,6 @@ function fmt(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
-function getDates(results) {
-  return results.map(r => fmt(r.date));
-}
-
-function getBalances(results) {
-  return results.map(r => r.balance);
-}
-
 function getCashflows(results) {
   return results.map(r => r.cashflow);
 }

@@ -5,9 +5,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm install          # install dev dependencies (vitest)
+npm install          # install dev dependencies (vitest, eslint)
 npm test             # run all tests once
 npm run test:watch   # run tests in watch mode
+npm run lint         # run ESLint on src/*.js
 python3 -m http.server 8080  # serve app (ES modules require HTTP server)
 ```
 
