@@ -382,6 +382,8 @@
               if (p.initialBalance !== undefined) initialBalance.value = p.initialBalance;
               if (p.portfolioCurrency) portfolioCurrency.value = p.portfolioCurrency;
               if (p.simPeriodPreset) simPeriodPreset.value = p.simPeriodPreset;
+              if (p.eventsCollapsed !== undefined) eventsCollapsed.value = p.eventsCollapsed;
+              if (p.resultsCollapsed !== undefined) resultsCollapsed.value = p.resultsCollapsed;
             }
           } catch {}
         }
@@ -393,6 +395,8 @@
               initialBalance: initialBalance.value,
               portfolioCurrency: portfolioCurrency.value,
               simPeriodPreset: simPeriodPreset.value,
+              eventsCollapsed: eventsCollapsed.value,
+              resultsCollapsed: resultsCollapsed.value,
             }));
           } catch {}
         }
@@ -400,7 +404,6 @@
         const simEnd = ref('');
         const initialBalance = ref(1000);
         const simError = ref('');
-        loadSimParams();
 
         // Period preset
         const simPeriodPreset = ref('year');
@@ -484,6 +487,8 @@
 
         // Portfolio currency
         const portfolioCurrency = ref('USD');
+
+        loadSimParams();
 
         // Events — live table with inline editing
         const events = ref(loadFromStorage() || []);
