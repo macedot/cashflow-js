@@ -1,10 +1,18 @@
 import { describe, it, expect } from 'vitest';
 import { runSimulation, FREQUENCIES, isValidDate, parseDate } from './cashflow.js';
 
+/**
+ * @param {Date} d
+ * @returns {string}
+ */
 function fmt(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
+/**
+ * @param {Array<{cashflow: number}>} results
+ * @returns {number[]}
+ */
 function getCashflows(results) {
   return results.map(r => r.cashflow);
 }
@@ -282,8 +290,11 @@ describe('isValidDate', () => {
   });
 
   it('returns false for non-Date', () => {
+    // @ts-ignore - intentionally testing with non-Date values
     expect(isValidDate('2025-01-01')).toBe(false);
+    // @ts-ignore - intentionally testing with non-Date values
     expect(isValidDate(null)).toBe(false);
+    // @ts-ignore - intentionally testing with non-Date values
     expect(isValidDate(undefined)).toBe(false);
   });
 });

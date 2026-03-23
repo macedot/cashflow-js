@@ -52,7 +52,10 @@ export function parseDate(dateStr) {
   }
   // Handle YYYY-MM-DD format specially to avoid UTC timezone issues
   if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    const [y, m, d] = dateStr.split('-').map(Number);
+    const parts = dateStr.split('-').map(Number);
+    const y = /** @type {number} */ (parts[0]);
+    const m = /** @type {number} */ (parts[1]);
+    const d = /** @type {number} */ (parts[2]);
     return new Date(y, m - 1, d); // Local time
   }
   return new Date(dateStr);
@@ -105,6 +108,7 @@ function addPeriod(date, frequency) {
     }
     case FREQUENCIES.ANNUAL: {
       // If starting on Feb 29 and next year is not a leap year, roll back to Feb 28
+      /** @param {number} y */
       const isLeapYear = (y) => new Date(y, 1, 29).getMonth() === 1;
       const nextYear = year + 1;
       const nextDay = (day === 29 && !isLeapYear(nextYear)) ? 28 : day;
@@ -116,26 +120,41 @@ function addPeriod(date, frequency) {
 }
 
 /**
+ * @typedef {Object} CashflowOccurrence
+ * @property {Date} date
+ * @property {number} value
+ * @property {string} name
+ */
+
+/**
  * Generate all occurrences of a single event within the simulation range.
  * Returns array of {date, value, name} objects.
  *
  * @param {Event} event
  * @param {Date} simStart
  * @param {Date} simEnd
- * @returns {{date: Date, value: number, name: string}[]}
+ * @returns {CashflowOccurrence[]}
  */
 export function generateEventCashflows(event, simStart, simEnd) {
+  /** @type {CashflowOccurrence[]} */
   const result = [];
   const startDate = parseDate(event.startDate);
   // If no endDate, use simEnd as the boundary
-  const hasEndDate = event.endDate && event.endDate.trim() !== '';
-  const endDate = hasEndDate ? parseDate(event.endDate) : null;
+  const hasEndDate = typeof event.endDate === 'string' && event.endDate.trim() !== '';
+  /** @type {Date | null} */
+  const endDate = hasEndDate ? parseDate(/** @type {string} */ (event.endDate)) : null;
 
   // Determine effective end: min(event.endDate, simEnd) or just simEnd if no endDate
-  const effectiveEnd = hasEndDate ? (endDate < simEnd ? endDate : simEnd) : simEnd;
+  /** @type {Date} */
+  let effectiveEnd;
+  if (hasEndDate && endDate !== null) {
+    effectiveEnd = endDate < simEnd ? endDate : simEnd;
+  } else {
+    effectiveEnd = simEnd;
+  }
 
   // If the event ends before simStart, return empty
-  if (hasEndDate && endDate < simStart) {
+  if (hasEndDate && endDate !== null && endDate < simStart) {
     return result;
   }
 
