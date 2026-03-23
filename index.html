@@ -503,16 +503,17 @@
         watch([simStart, simEnd, initialBalance], () => { saveSimParams(); autoSimulate(); });
         watch(portfolioCurrency, () => { saveSimParams(); });
 
-        // When preset changes, update dates
+        // When preset changes, update dates (skip date-watch with flag)
+        let updatingDates = false;
         watch(simPeriodPreset, (preset) => {
           if (preset !== 'custom') {
+            updatingDates = true;
             applyPeriodPreset(preset);
+            updatingDates = false;
           }
         });
-
-        // When user manually edits dates, switch to custom preset
         watch([simStart, simEnd], () => {
-          simPeriodPreset.value = 'custom';
+          if (!updatingDates) simPeriodPreset.value = 'custom';
         });
 
         // Re-render fullscreen chart when toggling fullscreen (canvas needs to be in DOM first)
