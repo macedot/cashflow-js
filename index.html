@@ -420,6 +420,39 @@
           simEnd.value = formatDate(end);
         }
 
+        // Expand simulation period to cover all current events
+        function expandSimPeriodForEvents() {
+          if (events.value.length === 0) return;
+          const today = new Date();
+          const todayStr = formatDate(today);
+          const oneYearLater = formatDate(new Date(today.getFullYear() + 1, today.getMonth(), today.getDate()));
+          let earliestStart = null;
+          let latestEnd = null;
+          for (const ev of events.value) {
+            if (ev.startDate) {
+              if (!earliestStart || ev.startDate < earliestStart) {
+                earliestStart = ev.startDate;
+              }
+            }
+            if (ev.endDate) {
+              if (!latestEnd || ev.endDate > latestEnd) {
+                latestEnd = ev.endDate;
+              }
+            }
+          }
+          // Expand start if needed
+          if (earliestStart && earliestStart < simStart.value) {
+            simStart.value = earliestStart;
+          }
+          // Expand end: prefer latestEnd, fallback to today+1year if events have no endDate
+          if (latestEnd && latestEnd > simEnd.value) {
+            simEnd.value = latestEnd;
+          } else if (!latestEnd || latestEnd < todayStr) {
+            simEnd.value = oneYearLater;
+          }
+          simPeriodPreset.value = 'custom';
+        }
+
         // Theme
         const darkMode = ref(document.documentElement.classList.contains('dark'));
         let userToggled = false;
@@ -702,7 +735,11 @@
               csvSuccess.value = `Imported ${imported} events${skipped > 0 ? `, skipped ${skipped} rows` : ''}`;
               if (imported > 0) saveToStorage();
               event.target.value = '';
-              if (imported > 0) autoSimulate();
+              if (imported > 0) {
+                // Expand simulation period to cover imported events
+                expandSimPeriodForEvents();
+                autoSimulate();
+              }
             },
             error: (err) => {
               csvError.value = 'CSV error: ' + err.message;
