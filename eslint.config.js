@@ -61,6 +61,7 @@ export default [
       'no-delete-var': 'error',
       'no-undef': 'error',
       'no-use-before-define': ['error', { functions: false, classes: true, variables: true }],
+<<<<<<< add-code-quality-tools
       complexity: ['error', { max: 10 }],
       'max-lines': ['error', { max: 600 }],
       'boundaries/element-types': 'error',
@@ -69,6 +70,9 @@ export default [
       boundaries: {
         elements: ['src/**'],
       },
+=======
+      'complexity': ['error', { max: 10 }],
+>>>>>>> master
     },
   },
 ];
