@@ -757,6 +757,28 @@
                 display: true,
                 position: 'top',
               },
+              // Draw a stronger/brighter horizontal line at y=0
+              zeroLine: {
+                afterDraw: (chart) => {
+                  const yScale = chart.scales.y;
+                  const ctx = chart.ctx;
+                  const { top, bottom } = chart.chartArea;
+                  const xLeft = chart.chartArea.left;
+                  const xRight = chart.chartArea.right;
+                  const zeroY = yScale.getPixelForValue(0);
+                  if (zeroY >= top && zeroY <= bottom) {
+                    ctx.save();
+                    ctx.strokeStyle = '#9ca3af';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([]);
+                    ctx.beginPath();
+                    ctx.moveTo(xLeft, zeroY);
+                    ctx.lineTo(xRight, zeroY);
+                    ctx.stroke();
+                    ctx.restore();
+                  }
+                },
+              },
             },
             scales: {
               x: {
@@ -837,6 +859,7 @@
                 position: 'top',
                 labels: { color: textColor },
               },
+              zeroLine: chartOptions.plugins.zeroLine,
             };
             const fullscreenConfig = JSON.parse(JSON.stringify(chartConfig));
             // Set bar spacing per dataset for fullscreen
