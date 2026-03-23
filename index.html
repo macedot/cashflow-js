@@ -779,6 +779,24 @@
                   }
                 },
               },
+              // Draw a stronger x-axis baseline
+              xAxisLine: {
+                afterDraw: (chart) => {
+                  const xScale = chart.scales.x;
+                  const ctx = chart.ctx;
+                  const { left, right, top, bottom } = chart.chartArea;
+                  const xBottomY = bottom;
+                  ctx.save();
+                  ctx.strokeStyle = '#9ca3af';
+                  ctx.lineWidth = 2;
+                  ctx.setLineDash([]);
+                  ctx.beginPath();
+                  ctx.moveTo(left, xBottomY);
+                  ctx.lineTo(right, xBottomY);
+                  ctx.stroke();
+                  ctx.restore();
+                },
+              },
             },
             scales: {
               x: {
@@ -860,6 +878,7 @@
                 labels: { color: textColor },
               },
               zeroLine: chartOptions.plugins.zeroLine,
+              xAxisLine: chartOptions.plugins.xAxisLine,
             };
             const fullscreenConfig = JSON.parse(JSON.stringify(chartConfig));
             // Set bar spacing per dataset for fullscreen
