@@ -1,7 +1,7 @@
 {
-  "$schema": "https://raw.githubusercontent.com/un-ts/eslint-plugin-boundaries/main/docs/config/knip.schema.json",
-  "entry": ["src/**/*.js"],
-  "project": ["src/**/*.js"],
-  "ignore": ["**/*.test.js"],
-  "ignoreDependencies": ["vitest", "lint-staged"]
+  "$schema": "https://raw.githubusercontent.com/nicepkg/knip/main/knip.schema.json",
+  "entry": ["src/**/*.js", "index.html"],
+  "project": ["src/**/*.js", "*.js"],
+  "ignore": ["**/*.test.js", "vitest.config.js"],
+  "ignoreDependencies": ["vitest", "lint-staged", "@vitest/coverage-v8"]
 }

@@ -36,7 +36,7 @@ export default [
     },
     rules: {
       'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'no-console': ['warn', { allow: ['debug', 'info', 'warn', 'error'] }],
       'no-implicit-globals': 'error',
       'no-implied-eval': 'error',
       'no-new-func': 'error',

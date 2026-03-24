@@ -6,13 +6,16 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src/*.js",
     "lint:fix": "eslint src/*.js --fix",
     "format": "prettier --write \"src/**/*.js\"",
     "typecheck": "tsc --noEmit",
     "knip": "knip",
     "jscpd": "jscpd --config .jscpd.json",
-    "prepare": "husky"
+    "prepare": "husky",
+    "release": "release-please release",
+    "docs": "jsdoc2md src/cashflow.js > API.md"
   },
   "lint-staged": {
     "*.js": [
@@ -25,13 +28,16 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.1",
     "eslint": "^10.1.0",
     "eslint-plugin-boundaries": "^6.0.1",
     "husky": "^9.1.7",
     "jscpd": "^4.0.8",
+    "jsdoc-to-markdown": "^9.1.3",
     "knip": "^6.0.4",
     "lint-staged": "^16.4.0",
     "prettier": "^3.8.1",
+    "release-please": "^17.3.0",
     "typescript": "^6.0.2",
     "vitest": "^4.1.1"
   }
