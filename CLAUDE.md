@@ -5,11 +5,18 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm install          # install dev dependencies (vitest, eslint, typescript)
-npm test             # run all tests once
-npm run test:watch   # run tests in watch mode
-npm run lint         # run ESLint on src/*.js
-npm run typecheck    # run TypeScript type checker on src/*.js
+npm install            # install dev dependencies (vitest, eslint, typescript)
+npm test               # run all tests once (30 unit tests, src/**/*.test.js)
+npm run test:watch     # run tests in watch mode
+npm run test:coverage  # run tests with coverage report
+npm run test:e2e       # run Playwright e2e tests (requires http.server running)
+npm run test:e2e:ui    # run Playwright with UI
+npm run lint           # run ESLint on src/*.js
+npm run lint:fix       # auto-fix ESLint errors
+npm run format         # format code with Prettier (src/**/*.js)
+npm run typecheck      # run TypeScript type checker on src/*.js
+npm run knip           # check for unused dependencies
+npm run jscpd          # check for duplicate code
 python3 -m http.server 8080  # serve app (ES modules require HTTP server)
 ```
 
@@ -18,6 +25,7 @@ Open http://localhost:8080 in your browser. Direct file:// access works too but 
 ## Architecture
 
 ### CDN-only SPA (no build step)
+
 - **Vue 3** (CDN) — SPA framework, Composition API
 - **Chart.js 4.5.1** (CDN) — bar + line mixed chart
 - **PapaParse 5.5.3** (CDN) — CSV import/export
@@ -25,13 +33,18 @@ Open http://localhost:8080 in your browser. Direct file:// access works too but 
 - **ES modules** via `<script type="module">` importing `src/cashflow.js`
 
 ### File responsibilities
+
 - `index.html` — HTML structure, CDN script tags, Vue 3 app setup, all application logic (chart rendering, events management, dark mode, CSV import/export). **Do not add business logic here.**
 - `src/cashflow.js` — pure simulation engine. Zero dependencies. Only uses standard JS built-ins (Date, Math, Array, Map). Exports: `runSimulation`, `generateEventCashflows`, `parseDate`, `addPeriod`, `isValidDate`, `FREQUENCIES`. Can be imported by any JS project.
+- `src/logger.js` — structured logger with sensitive data redaction (API keys, passwords, CCs, emails).
+- `src/trace.js` — distributed tracing for Plausible analytics (traceId, spanId, W3C Trace Context headers).
 - `src/style.css` — custom CSS only. CSS custom properties for theming, dark mode overrides, chart-container, error messages, toggle icons.
 - `src/cashflow.test.js` — Vitest unit tests (30 tests). Tests run in Node environment.
 
 ### Dark mode implementation
+
 Tailwind CDN v2.x does NOT support `dark:` variants. Dark mode is implemented via:
+
 1. Inline `<script>` in `<head>` sets `.dark` class on `<html>` BEFORE Tailwind CSS parses
 2. CSS custom properties on `:root` (light) and `.dark`/`html.dark` (dark)
 3. `!important` overrides on `html.dark` selectors targeting every Tailwind utility class used in the app (bg-white, text-gray-700, etc.)
@@ -39,6 +52,7 @@ Tailwind CDN v2.x does NOT support `dark:` variants. Dark mode is implemented vi
 **Rule**: When adding new Tailwind classes, add corresponding `html.dark .your-class { property: value !important; }` to `src/style.css`.
 
 ### Key Vue patterns
+
 - **Inline editing state**: `editingEventIndex` (ref) + `editDraft` (reactive) for existing rows; `newEventDraft` (reactive) for "+" row; `validateDraft(draft)` for validation
 - **Events table**: `eventsCollapsed` (ref) for collapse state; `portfolioCurrency` for display currency
 - **Charts**: `cashflowChart` and `cashflowChartFullscreen` canvas refs; `cashflowChartInstance` / `cashflowChartFullscreenInstance` for Chart.js instances; `chartFullscreen` (ref) for overlay state
@@ -46,4 +60,5 @@ Tailwind CDN v2.x does NOT support `dark:` variants. Dark mode is implemented vi
 - **ESC key**: cancels inline editing (prioritized) or exits fullscreen chart
 
 ### Date handling
+
 `parseDate()` uses local time (`new Date(y, m-1, d)`) to avoid UTC timezone shifts with YYYY-MM-DD strings. All dates flow through this function in `cashflow.js`.

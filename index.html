@@ -558,6 +558,7 @@
 
     <script type="module">
       import { runSimulation, FREQUENCIES } from './src/cashflow.js';
+      import { getTraceContext, traceAnalyticsEvent } from './src/trace.js';
 
       const { createApp, ref, reactive, computed, nextTick, onMounted, watch } = Vue;
 
@@ -675,7 +676,12 @@
             document.documentElement.classList.toggle('dark', darkMode.value);
             // Track theme toggle in Plausible analytics
             if (typeof plausible !== 'undefined') {
-              plausible('toggle_theme', { props: { mode: darkMode.value ? 'dark' : 'light' } });
+              const trace = traceAnalyticsEvent('toggle_theme', {
+                mode: darkMode.value ? 'dark' : 'light',
+              });
+              plausible('toggle_theme', {
+                props: { mode: darkMode.value ? 'dark' : 'light', _traceId: trace.traceId },
+              });
             }
           }
           if (window.matchMedia) {
@@ -759,7 +765,8 @@
             autoSimulate();
             // Track pageview in Plausible analytics
             if (typeof plausible !== 'undefined') {
-              plausible('pageview');
+              const trace = getTraceContext();
+              plausible('pageview', { props: { _traceId: trace.traceId } });
             }
             document.addEventListener('keydown', e => {
               if (e.key === 'Escape') {
@@ -982,7 +989,10 @@
                   autoSimulate();
                   // Track import in Plausible analytics
                   if (typeof plausible !== 'undefined') {
-                    plausible('import_csv', { props: { events: imported } });
+                    const trace = traceAnalyticsEvent('import_csv', { events: imported });
+                    plausible('import_csv', {
+                      props: { events: imported, _traceId: trace.traceId },
+                    });
                   }
                 }
               },
@@ -1008,7 +1018,12 @@
             nextTick(() => renderCharts());
             // Track simulation run in Plausible analytics
             if (typeof plausible !== 'undefined') {
-              plausible('run_simulation', { props: { eventCount: events.value.length } });
+              const trace = traceAnalyticsEvent('run_simulation', {
+                eventCount: events.value.length,
+              });
+              plausible('run_simulation', {
+                props: { eventCount: events.value.length, _traceId: trace.traceId },
+              });
             }
           }
 
@@ -1085,6 +1100,26 @@
                     ctx.lineTo(right, xBottomY);
                     ctx.stroke();
                     ctx.restore();
+                  },
+                },
+                tooltip: {
+                  callbacks: {
+                    label: context => {
+                      const raw = context.raw;
+                      const datasetIdx = context.datasetIndex;
+                      // Balance dataset (index 2): show balance value
+                      if (datasetIdx === 2) {
+                        return `Balance: ${raw.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
+                      }
+                      // Cashflow datasets: show individual entries
+                      if (raw && raw.items && raw.items.length > 0) {
+                        return raw.items.map(
+                          item =>
+                            `${item.name}: ${item.value >= 0 ? '+' : ''}${item.value.toFixed(2)}`
+                        );
+                      }
+                      return '';
+                    },
                   },
                 },
               },
@@ -1214,7 +1249,12 @@
             URL.revokeObjectURL(url);
             // Track export in Plausible analytics
             if (typeof plausible !== 'undefined') {
-              plausible('export_events_csv', { props: { eventCount: events.value.length } });
+              const trace = traceAnalyticsEvent('export_events_csv', {
+                eventCount: events.value.length,
+              });
+              plausible('export_events_csv', {
+                props: { eventCount: events.value.length, _traceId: trace.traceId },
+              });
             }
           }
 
@@ -1246,8 +1286,11 @@
             URL.revokeObjectURL(url);
             // Track export in Plausible analytics
             if (typeof plausible !== 'undefined') {
+              const trace = traceAnalyticsEvent('export_results_csv', {
+                rowCount: filteredResults.value.length,
+              });
               plausible('export_results_csv', {
-                props: { rowCount: filteredResults.value.length },
+                props: { rowCount: filteredResults.value.length, _traceId: trace.traceId },
               });
             }
           }
