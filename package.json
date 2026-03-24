@@ -7,6 +7,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "lint": "eslint src/*.js",
     "lint:fix": "eslint src/*.js --fix",
     "format": "prettier --write \"src/**/*.js\"",
@@ -28,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.58.2",
     "@vitest/coverage-v8": "^4.1.1",
     "eslint": "^10.1.0",
     "eslint-plugin-boundaries": "^6.0.1",
