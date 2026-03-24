@@ -83,3 +83,9 @@ Example:
 ## Build & Deployment
 
 This is a CDN-only SPA with no build step. All dependencies are loaded via CDN.
+
+## Documentation
+
+- [API Documentation](API.md) - Auto-generated API reference
+- [Architecture](docs/architecture.md) - System architecture diagrams
+- [Runbooks](docs/runbooks.md) - Development and troubleshooting guides

@@ -1,177 +1,360 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Cashflow Simulator</title>
-  <script>
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.add('dark');
-    }
-  </script>
-  <script src="https://unpkg.com/vue@3.5.30/dist/vue.global.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <link href="./src/style.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 min-h-screen">
-  <div id="app-load-error" style="display:none; padding:2rem; text-align:center; color:#dc2626;">
-    Failed to load application. Please check your internet connection and refresh.
-  </div>
-  <div id="app" v-cloak>
-    <!-- Header -->
-    <header class="bg-blue-600 dark:bg-gray-800 text-white p-4 shadow flex justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold">Cashflow Simulator</h1>
-        <p class="text-blue-100 text-sm">Visualize your income, expenses, and balance over time</p>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="text-sm text-blue-200">v0.3.0</span>
-        <button @click="toggleTheme" class="text-white hover:text-blue-200 text-2xl" :title="darkMode ? 'Light mode' : 'Dark mode'">
-          {{ darkMode ? '🌙' : '☀️' }}
-        </button>
-      </div>
-    </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Cashflow Simulator</title>
+    <!-- Plausible Analytics - Privacy-friendly, GDPR-compliant analytics -->
+    <script
+      defer
+      data-domain="cashflow.macedot.dev"
+      src="https://plausible.io/js/script.js"
+    ></script>
+    <script>
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+    <script src="https://unpkg.com/vue@3.5.30/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.5.3/papaparse.min.js"></script>
+    <link
+      href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+      rel="stylesheet"
+    />
+    <link href="./src/style.css" rel="stylesheet" />
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <div
+      id="app-load-error"
+      style="display: none; padding: 2rem; text-align: center; color: #dc2626"
+    >
+      Failed to load application. Please check your internet connection and refresh.
+    </div>
+    <div id="app" v-cloak>
+      <!-- Header -->
+      <header
+        class="bg-blue-600 dark:bg-gray-800 text-white p-4 shadow flex justify-between items-center"
+      >
+        <div>
+          <h1 class="text-2xl font-bold">Cashflow Simulator</h1>
+          <p class="text-blue-100 text-sm">
+            Visualize your income, expenses, and balance over time
+          </p>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-blue-200">v0.3.0</span>
+          <button
+            @click="toggleTheme"
+            class="text-white hover:text-blue-200 text-2xl"
+            :title="darkMode ? 'Light mode' : 'Dark mode'"
+          >
+            {{ darkMode ? '🌙' : '☀️' }}
+          </button>
+        </div>
+      </header>
 
-    <!-- Shadow overlay when fullscreen -->
-    <Transition name="fade">
-      <div v-if="chartFullscreen" class="fixed inset-0 z-40 bg-black bg-opacity-30"></div>
-    </Transition>
+      <!-- Shadow overlay when fullscreen -->
+      <Transition name="fade">
+        <div v-if="chartFullscreen" class="fixed inset-0 z-40 bg-black bg-opacity-30"></div>
+      </Transition>
 
-    <main class="container mx-auto p-4 max-w-6xl">
-      <!-- Simulation Period -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
-        <div class="grid grid-cols-5 gap-3">
-          <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Period</label>
-            <select v-model="simPeriodPreset"
-              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-              <option value="month">Month</option>
-              <option value="quarter">Quarter</option>
-              <option value="semester">Semester</option>
-              <option value="year">Year</option>
-              <option value="custom">Custom</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Start Date</label>
-            <input type="date" v-model="simStart"
-              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-          </div>
-          <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">End Date</label>
-            <input type="date" v-model="simEnd"
-              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-            <p v-if="simError" class="error-msg">{{ simError }}</p>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Initial Balance</label>
-            <input type="number" v-model.number="initialBalance" step="0.01" placeholder="0"
-              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-          </div>
-          <div>
-            <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Portfolio Currency</label>
-            <select v-model="portfolioCurrency"
-              class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600">
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
-              <option value="BRL">BRL</option>
-            </select>
+      <main class="container mx-auto p-4 max-w-6xl">
+        <!-- Simulation Period -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
+          <div class="grid grid-cols-5 gap-3">
+            <div>
+              <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Period</label>
+              <select
+                v-model="simPeriodPreset"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              >
+                <option value="month">Month</option>
+                <option value="quarter">Quarter</option>
+                <option value="semester">Semester</option>
+                <option value="year">Year</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">Start Date</label>
+              <input
+                type="date"
+                v-model="simStart"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              />
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1">End Date</label>
+              <input
+                type="date"
+                v-model="simEnd"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              />
+              <p v-if="simError" class="error-msg">{{ simError }}</p>
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1"
+                >Initial Balance</label
+              >
+              <input
+                type="number"
+                v-model.number="initialBalance"
+                step="0.01"
+                placeholder="0"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              />
+            </div>
+            <div>
+              <label class="block text-sm text-gray-600 dark:text-gray-300 mb-1"
+                >Portfolio Currency</label
+              >
+              <select
+                v-model="portfolioCurrency"
+                class="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white dark:border-gray-600"
+              >
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+                <option value="BRL">BRL</option>
+              </select>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Events Table (full width, live inline editing) -->
-      <div class="mb-4">
-        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-2">
-              <button @click="toggleEvents" class="text-gray-600 dark:text-gray-300 hover:text-gray-800">
-                <span :class="eventsCollapsed ? 'fold' : ''" class="toggle-icon inline-block w-4 text-center"></span>
-              </button>
-              <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Events ({{ events.length }})</h2>
+        <!-- Events Table (full width, live inline editing) -->
+        <div class="mb-4">
+          <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-2">
+                <button
+                  @click="toggleEvents"
+                  class="text-gray-600 dark:text-gray-300 hover:text-gray-800"
+                >
+                  <span
+                    :class="eventsCollapsed ? 'fold' : ''"
+                    class="toggle-icon inline-block w-4 text-center"
+                  ></span>
+                </button>
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                  Events ({{ events.length }})
+                </h2>
+              </div>
+              <div class="flex gap-2 items-center">
+                <button
+                  v-if="events.length > 0"
+                  @click="clearEvents"
+                  class="text-sm text-red-500 hover:text-red-700 dark:text-red-400"
+                >
+                  Clear All
+                </button>
+                <label
+                  class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer"
+                >
+                  Import CSV
+                  <input type="file" accept=".csv" @change="importCSV" class="hidden" />
+                </label>
+                <button
+                  v-if="events.length > 0"
+                  @click="exportEventsCSV"
+                  class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+                >
+                  Export CSV
+                </button>
+              </div>
             </div>
-            <div class="flex gap-2 items-center">
-              <button v-if="events.length > 0" @click="clearEvents"
-                class="text-sm text-red-500 hover:text-red-700 dark:text-red-400">Clear All</button>
-              <label class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 cursor-pointer">
-                Import CSV
-                <input type="file" accept=".csv" @change="importCSV" class="hidden">
-              </label>
-              <button v-if="events.length > 0" @click="exportEventsCSV"
-                class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700">
-                Export CSV
-              </button>
-            </div>
-          </div>
-          <p v-if="csvError" class="error-msg mb-2">{{ csvError }}</p>
-          <p v-if="csvSuccess" class="text-green-600 text-sm mb-2">{{ csvSuccess }}</p>
-          <div v-show="!eventsCollapsed" class="overflow-x-auto max-h-64 overflow-y-auto">
-            <table class="w-full text-xs">
-              <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
-                <tr>
-                  <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Name</th>
-                  <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Period</th>
-                  <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Freq</th>
-                  <th class="px-2 py-1 text-right text-gray-700 dark:text-gray-200">Value</th>
-                  <th class="px-2 py-1 text-center text-gray-700 dark:text-gray-200">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Existing events: display mode -->
-                <tr v-for="(event, index) in events" :key="index"
-                  class="border-t bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
-                  :class="{ 'bg-blue-50 dark:bg-blue-900': editingEventIndex === index }">
-                  <!-- Display row -->
-                  <template v-if="editingEventIndex !== index">
-                    <td class="px-2 py-1 font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
-                        @click="startEditEvent(index)">{{ event.name || '(unnamed)' }}</td>
-                    <td class="px-2 py-1 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
-                        @click="startEditEvent(index)">
-                      {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
-                    </td>
-                    <td class="px-2 py-1 text-gray-400 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
-                        @click="startEditEvent(index)">{{ event.frequency }}</td>
-                    <td class="px-2 py-1 text-right cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+            <p v-if="csvError" class="error-msg mb-2">{{ csvError }}</p>
+            <p v-if="csvSuccess" class="text-green-600 text-sm mb-2">{{ csvSuccess }}</p>
+            <div v-show="!eventsCollapsed" class="overflow-x-auto max-h-64 overflow-y-auto">
+              <table class="w-full text-xs">
+                <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
+                  <tr>
+                    <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Name</th>
+                    <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Period</th>
+                    <th class="px-2 py-1 text-left text-gray-700 dark:text-gray-200">Freq</th>
+                    <th class="px-2 py-1 text-right text-gray-700 dark:text-gray-200">Value</th>
+                    <th class="px-2 py-1 text-center text-gray-700 dark:text-gray-200">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Existing events: display mode -->
+                  <tr
+                    v-for="(event, index) in events"
+                    :key="index"
+                    class="border-t bg-gray-50 dark:bg-gray-700 dark:border-gray-600"
+                    :class="{ 'bg-blue-50 dark:bg-blue-900': editingEventIndex === index }"
+                  >
+                    <!-- Display row -->
+                    <template v-if="editingEventIndex !== index">
+                      <td
+                        class="px-2 py-1 font-medium text-gray-700 dark:text-gray-200 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        @click="startEditEvent(index)"
+                      >
+                        {{ event.name || '(unnamed)' }}
+                      </td>
+                      <td
+                        class="px-2 py-1 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        @click="startEditEvent(index)"
+                      >
+                        {{ formatDate(event.startDate) }} - {{ formatDate(event.endDate) }}
+                      </td>
+                      <td
+                        class="px-2 py-1 text-gray-400 dark:text-gray-400 cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
+                        @click="startEditEvent(index)"
+                      >
+                        {{ event.frequency }}
+                      </td>
+                      <td
+                        class="px-2 py-1 text-right cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-800"
                         :class="event.value >= 0 ? 'text-green-600' : 'text-red-600'"
-                        @click="startEditEvent(index)">
-                      {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
-                      <span v-if="event.currency && event.currency !== portfolioCurrency" class="text-xs text-gray-400">{{ event.currency }}</span>
-                    </td>
-                    <td class="px-2 py-1 text-center">
-                      <button @click="removeEvent(index)"
-                        class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs px-1">X</button>
-                    </td>
-                  </template>
-                  <!-- Edit row -->
-                  <template v-else>
+                        @click="startEditEvent(index)"
+                      >
+                        {{ event.value >= 0 ? '+' : '' }}{{ event.value.toFixed(2) }}
+                        <span
+                          v-if="event.currency && event.currency !== portfolioCurrency"
+                          class="text-xs text-gray-400"
+                          >{{ event.currency }}</span
+                        >
+                      </td>
+                      <td class="px-2 py-1 text-center">
+                        <button
+                          @click="removeEvent(index)"
+                          class="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-xs px-1"
+                        >
+                          X
+                        </button>
+                      </td>
+                    </template>
+                    <!-- Edit row -->
+                    <template v-else>
+                      <td class="px-1 py-1">
+                        <input
+                          type="text"
+                          v-model="editDraft.name"
+                          class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                          :class="formError.name ? 'border-red-500' : ''"
+                          @keyup.enter="saveEditEvent"
+                        />
+                        <p v-if="formError.name" class="error-msg text-xs">{{ formError.name }}</p>
+                      </td>
+                      <td class="px-1 py-1">
+                        <div class="flex items-center gap-1">
+                          <input
+                            type="date"
+                            v-model="editDraft.startDate"
+                            class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                            :class="formError.startDate ? 'border-red-500' : ''"
+                            @keyup.enter="saveEditEvent"
+                          />
+                          <span class="text-gray-400">-</span>
+                          <input
+                            type="date"
+                            v-model="editDraft.endDate"
+                            class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                            @keyup.enter="saveEditEvent"
+                          />
+                        </div>
+                        <p v-if="formError.startDate" class="error-msg text-xs">
+                          {{ formError.startDate }}
+                        </p>
+                      </td>
+                      <td class="px-1 py-1">
+                        <select
+                          v-model="editDraft.frequency"
+                          class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                          :class="formError.frequency ? 'border-red-500' : ''"
+                          @keyup.enter="saveEditEvent"
+                        >
+                          <option value="">Select...</option>
+                          <option value="daily">Daily</option>
+                          <option value="weekly">Weekly</option>
+                          <option value="monthly">Monthly</option>
+                          <option value="quarterly">Quarterly</option>
+                          <option value="semi-annual">Semi-annual</option>
+                          <option value="annual">Annual</option>
+                        </select>
+                        <p v-if="formError.frequency" class="error-msg text-xs">
+                          {{ formError.frequency }}
+                        </p>
+                      </td>
+                      <td class="px-1 py-1">
+                        <div class="flex items-center justify-end gap-1">
+                          <input
+                            type="number"
+                            v-model.number="editDraft.value"
+                            step="0.01"
+                            class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                            @keyup.enter="saveEditEvent"
+                          />
+                          <select
+                            v-model="editDraft.currency"
+                            class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
+                            @keyup.enter="saveEditEvent"
+                          >
+                            <option value="USD">USD</option>
+                            <option value="EUR">EUR</option>
+                            <option value="GBP">GBP</option>
+                            <option value="BRL">BRL</option>
+                          </select>
+                        </div>
+                      </td>
+                      <td class="px-1 py-1 text-center">
+                        <button
+                          @click="saveEditEvent"
+                          class="text-green-600 hover:text-green-800 text-xs px-1 dark:text-green-400 dark:hover:text-green-300"
+                        >
+                          OK
+                        </button>
+                        <button
+                          @click="cancelEditEvent"
+                          class="text-gray-500 hover:text-gray-700 text-xs px-1 dark:text-gray-400 dark:hover:text-gray-300"
+                        >
+                          X
+                        </button>
+                      </td>
+                    </template>
+                  </tr>
+                  <!-- New event row (+) -->
+                  <tr
+                    class="border-t-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800"
+                  >
                     <td class="px-1 py-1">
-                      <input type="text" v-model="editDraft.name"
+                      <input
+                        type="text"
+                        v-model="newEventDraft.name"
+                        placeholder="Event name"
                         class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        :class="formError.name ? 'border-red-500' : ''"
-                        @keyup.enter="saveEditEvent">
-                      <p v-if="formError.name" class="error-msg text-xs">{{ formError.name }}</p>
+                        @keyup.enter="saveNewEvent"
+                      />
                     </td>
                     <td class="px-1 py-1">
                       <div class="flex items-center gap-1">
-                        <input type="date" v-model="editDraft.startDate"
+                        <input
+                          type="date"
+                          v-model="newEventDraft.startDate"
                           class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
                           :class="formError.startDate ? 'border-red-500' : ''"
-                          @keyup.enter="saveEditEvent">
+                          @keyup.enter="saveNewEvent"
+                        />
                         <span class="text-gray-400">-</span>
-                        <input type="date" v-model="editDraft.endDate"
+                        <input
+                          type="date"
+                          v-model="newEventDraft.endDate"
                           class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                          @keyup.enter="saveEditEvent">
+                          @keyup.enter="saveNewEvent"
+                        />
                       </div>
-                      <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
+                      <p v-if="formError.startDate" class="error-msg text-xs">
+                        {{ formError.startDate }}
+                      </p>
                     </td>
                     <td class="px-1 py-1">
-                      <select v-model="editDraft.frequency"
+                      <select
+                        v-model="newEventDraft.frequency"
                         class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
                         :class="formError.frequency ? 'border-red-500' : ''"
-                        @keyup.enter="saveEditEvent">
+                        @keyup.enter="saveNewEvent"
+                      >
                         <option value="">Select...</option>
                         <option value="daily">Daily</option>
                         <option value="weekly">Weekly</option>
@@ -180,16 +363,25 @@
                         <option value="semi-annual">Semi-annual</option>
                         <option value="annual">Annual</option>
                       </select>
-                      <p v-if="formError.frequency" class="error-msg text-xs">{{ formError.frequency }}</p>
+                      <p v-if="formError.frequency" class="error-msg text-xs">
+                        {{ formError.frequency }}
+                      </p>
                     </td>
                     <td class="px-1 py-1">
                       <div class="flex items-center justify-end gap-1">
-                        <input type="number" v-model.number="editDraft.value" step="0.01"
+                        <input
+                          type="number"
+                          v-model.number="newEventDraft.value"
+                          step="0.01"
                           class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                          @keyup.enter="saveEditEvent">
-                        <select v-model="editDraft.currency"
+                          placeholder="0.00"
+                          @keyup.enter="saveNewEvent"
+                        />
+                        <select
+                          v-model="newEventDraft.currency"
                           class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                          @keyup.enter="saveEditEvent">
+                          @keyup.enter="saveNewEvent"
+                        >
                           <option value="USD">USD</option>
                           <option value="EUR">EUR</option>
                           <option value="GBP">GBP</option>
@@ -198,839 +390,920 @@
                       </div>
                     </td>
                     <td class="px-1 py-1 text-center">
-                      <button @click="saveEditEvent"
-                        class="text-green-600 hover:text-green-800 text-xs px-1 dark:text-green-400 dark:hover:text-green-300">OK</button>
-                      <button @click="cancelEditEvent"
-                        class="text-gray-500 hover:text-gray-700 text-xs px-1 dark:text-gray-400 dark:hover:text-gray-300">X</button>
+                      <button
+                        @click="saveNewEvent"
+                        class="text-green-600 hover:text-green-800 font-bold text-lg dark:text-green-400 dark:hover:text-green-300"
+                        title="Add event"
+                      >
+                        +
+                      </button>
                     </td>
-                  </template>
-                </tr>
-                <!-- New event row (+) -->
-                <tr class="border-t-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800">
-                  <td class="px-1 py-1">
-                    <input type="text" v-model="newEventDraft.name" placeholder="Event name"
-                      class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                      @keyup.enter="saveNewEvent">
-                  </td>
-                  <td class="px-1 py-1">
-                    <div class="flex items-center gap-1">
-                      <input type="date" v-model="newEventDraft.startDate"
-                        class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        :class="formError.startDate ? 'border-red-500' : ''"
-                        @keyup.enter="saveNewEvent">
-                      <span class="text-gray-400">-</span>
-                      <input type="date" v-model="newEventDraft.endDate"
-                        class="w-28 border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        @keyup.enter="saveNewEvent">
-                    </div>
-                    <p v-if="formError.startDate" class="error-msg text-xs">{{ formError.startDate }}</p>
-                  </td>
-                  <td class="px-1 py-1">
-                    <select v-model="newEventDraft.frequency"
-                      class="w-full border rounded px-2 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                      :class="formError.frequency ? 'border-red-500' : ''"
-                      @keyup.enter="saveNewEvent">
-                      <option value="">Select...</option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                      <option value="quarterly">Quarterly</option>
-                      <option value="semi-annual">Semi-annual</option>
-                      <option value="annual">Annual</option>
-                    </select>
-                    <p v-if="formError.frequency" class="error-msg text-xs">{{ formError.frequency }}</p>
-                  </td>
-                  <td class="px-1 py-1">
-                    <div class="flex items-center justify-end gap-1">
-                      <input type="number" v-model.number="newEventDraft.value" step="0.01"
-                        class="w-20 border rounded px-2 py-1 text-xs text-right dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        placeholder="0.00"
-                        @keyup.enter="saveNewEvent">
-                      <select v-model="newEventDraft.currency"
-                        class="border rounded px-1 py-1 text-xs dark:bg-gray-700 dark:text-white dark:border-gray-600"
-                        @keyup.enter="saveNewEvent">
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                        <option value="BRL">BRL</option>
-                      </select>
-                    </div>
-                  </td>
-                  <td class="px-1 py-1 text-center">
-                    <button @click="saveNewEvent"
-                      class="text-green-600 hover:text-green-800 font-bold text-lg dark:text-green-400 dark:hover:text-green-300" title="Add event">+</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <p class="text-xs text-gray-400 dark:text-gray-400 mt-2">* Required: Start Date and Frequency. Click a row to edit.</p>
-        </div>
-      </div>
-
-      <!-- Combined Chart -->
-      <div v-if="results.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
-        <div class="flex justify-between items-center mb-3">
-          <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Cashflow & Balance Over Time</h2>
-          <div class="flex gap-2">
-            <button @click="chartFullscreen = !chartFullscreen"
-              class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600">
-              {{ chartFullscreen ? '⊠' : '⛶' }}
-            </button>
-            <button @click="exportResultsCSV"
-              class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700">
-              Export CSV
-            </button>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-400 mt-2">
+              * Required: Start Date and Frequency. Click a row to edit.
+            </p>
           </div>
         </div>
-        <div class="chart-container">
-          <canvas ref="cashflowChart"></canvas>
-        </div>
-      </div>
 
-      <!-- Chart Fullscreen Overlay -->
-      <Transition name="fade">
-      <div v-if="chartFullscreen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 m-4">
-        <div class="w-full h-full bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col p-4">
+        <!-- Combined Chart -->
+        <div v-if="results.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
           <div class="flex justify-between items-center mb-3">
-            <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Cashflow & Balance Over Time</h2>
-            <button @click="chartFullscreen = false"
-              class="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100">✕</button>
-          </div>
-          <div class="flex-1 chart-container">
-            <canvas ref="cashflowChartFullscreen"></canvas>
-          </div>
-        </div>
-      </div>
-      </Transition>
-
-      <!-- Results Table (collapsible) -->
-      <div class="mt-4">
-        <!-- Error state -->
-        <div v-if="simError" class="bg-red-50 dark:bg-red-900 rounded-lg shadow p-4">
-          <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-2">
-              <button @click="toggleResults" class="text-black dark:text-white hover:text-gray-600">
-                <span :class="resultsCollapsed ? 'fold' : ''" class="toggle-icon inline-block w-4 text-center"></span>
+            <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+              Cashflow & Balance Over Time
+            </h2>
+            <div class="flex gap-2">
+              <button
+                @click="chartFullscreen = !chartFullscreen"
+                class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-3 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+              >
+                {{ chartFullscreen ? '⊠' : '⛶' }}
               </button>
-              <h2 class="text-lg font-semibold text-red-700 dark:text-red-200">Invalid Simulation Parameters</h2>
+              <button
+                @click="exportResultsCSV"
+                class="text-sm bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
+              >
+                Export CSV
+              </button>
             </div>
           </div>
-          <div v-show="!resultsCollapsed" class="text-red-700 dark:text-red-200">
-            <p class="mb-2">{{ simError }}</p>
-            <p class="text-sm">Valid values: Start date must be on or before end date.</p>
+          <div class="chart-container">
+            <canvas ref="cashflowChart"></canvas>
           </div>
         </div>
 
-        <!-- Normal results -->
-        <div v-else-if="results.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-          <div class="flex justify-between items-center mb-3">
-            <div class="flex items-center gap-2">
-              <button @click="toggleResults" class="text-black dark:text-white hover:text-gray-600">
-                <span :class="resultsCollapsed ? 'fold' : ''" class="toggle-icon inline-block w-4 text-center"></span>
-              </button>
-              <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Results ({{ filteredResults.length }} entries)</h2>
+        <!-- Chart Fullscreen Overlay -->
+        <Transition name="fade">
+          <div
+            v-if="chartFullscreen"
+            class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 m-4"
+          >
+            <div
+              class="w-full h-full bg-white dark:bg-gray-800 rounded-lg shadow flex flex-col p-4"
+            >
+              <div class="flex justify-between items-center mb-3">
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                  Cashflow & Balance Over Time
+                </h2>
+                <button
+                  @click="chartFullscreen = false"
+                  class="text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-100"
+                >
+                  ✕
+                </button>
+              </div>
+              <div class="flex-1 chart-container">
+                <canvas ref="cashflowChartFullscreen"></canvas>
+              </div>
             </div>
           </div>
-          <div v-show="!resultsCollapsed" class="overflow-x-auto max-h-64 overflow-y-auto">
-            <table class="w-full text-sm">
-              <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
-                <tr>
-                  <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-200">Date</th>
-                  <th class="px-3 py-2 text-right text-gray-700 dark:text-gray-200">Cashflow</th>
-                  <th class="px-3 py-2 text-right text-gray-700 dark:text-gray-200">Balance</th>
-                  <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-200">Items</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(row, i) in filteredResults" :key="i" class="border-t border-gray-200 dark:border-gray-600">
-                  <td class="px-3 py-2 text-gray-700 dark:text-gray-200">{{ formatDate(row.date) }}</td>
-                  <td class="px-3 py-2 text-right" :class="row.cashflow >= 0 ? 'text-green-600' : 'text-red-600'">
-                    {{ row.cashflow >= 0 ? '+' : '' }}{{ row.cashflow.toFixed(2) }}
-                  </td>
-                  <td class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-200">{{ row.balance.toFixed(2) }}</td>
-                  <td class="px-3 py-2 text-gray-500 dark:text-gray-400">{{ row.items.join(', ') || '—' }}</td>
-                </tr>
-              </tbody>
-            </table>
+        </Transition>
+
+        <!-- Results Table (collapsible) -->
+        <div class="mt-4">
+          <!-- Error state -->
+          <div v-if="simError" class="bg-red-50 dark:bg-red-900 rounded-lg shadow p-4">
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-2">
+                <button
+                  @click="toggleResults"
+                  class="text-black dark:text-white hover:text-gray-600"
+                >
+                  <span
+                    :class="resultsCollapsed ? 'fold' : ''"
+                    class="toggle-icon inline-block w-4 text-center"
+                  ></span>
+                </button>
+                <h2 class="text-lg font-semibold text-red-700 dark:text-red-200">
+                  Invalid Simulation Parameters
+                </h2>
+              </div>
+            </div>
+            <div v-show="!resultsCollapsed" class="text-red-700 dark:text-red-200">
+              <p class="mb-2">{{ simError }}</p>
+              <p class="text-sm">Valid values: Start date must be on or before end date.</p>
+            </div>
+          </div>
+
+          <!-- Normal results -->
+          <div
+            v-else-if="results.length > 0"
+            class="bg-white dark:bg-gray-800 rounded-lg shadow p-4"
+          >
+            <div class="flex justify-between items-center mb-3">
+              <div class="flex items-center gap-2">
+                <button
+                  @click="toggleResults"
+                  class="text-black dark:text-white hover:text-gray-600"
+                >
+                  <span
+                    :class="resultsCollapsed ? 'fold' : ''"
+                    class="toggle-icon inline-block w-4 text-center"
+                  ></span>
+                </button>
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                  Results ({{ filteredResults.length }} entries)
+                </h2>
+              </div>
+            </div>
+            <div v-show="!resultsCollapsed" class="overflow-x-auto max-h-64 overflow-y-auto">
+              <table class="w-full text-sm">
+                <thead class="bg-gray-100 dark:bg-gray-700 sticky top-0">
+                  <tr>
+                    <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-200">Date</th>
+                    <th class="px-3 py-2 text-right text-gray-700 dark:text-gray-200">Cashflow</th>
+                    <th class="px-3 py-2 text-right text-gray-700 dark:text-gray-200">Balance</th>
+                    <th class="px-3 py-2 text-left text-gray-700 dark:text-gray-200">Items</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr
+                    v-for="(row, i) in filteredResults"
+                    :key="i"
+                    class="border-t border-gray-200 dark:border-gray-600"
+                  >
+                    <td class="px-3 py-2 text-gray-700 dark:text-gray-200">
+                      {{ formatDate(row.date) }}
+                    </td>
+                    <td
+                      class="px-3 py-2 text-right"
+                      :class="row.cashflow >= 0 ? 'text-green-600' : 'text-red-600'"
+                    >
+                      {{ row.cashflow >= 0 ? '+' : '' }}{{ row.cashflow.toFixed(2) }}
+                    </td>
+                    <td class="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-200">
+                      {{ row.balance.toFixed(2) }}
+                    </td>
+                    <td class="px-3 py-2 text-gray-500 dark:text-gray-400">
+                      {{ row.items.join(', ') || '—' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
-    </main>
-  </div>
+      </main>
+    </div>
 
-  <script>
-    // Detect if Vue loaded
-    if (typeof Vue === 'undefined') {
-      document.getElementById('app').style.display = 'none';
-      document.getElementById('app-load-error').style.display = 'block';
-    }
-  </script>
+    <script>
+      // Detect if Vue loaded
+      if (typeof Vue === 'undefined') {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('app-load-error').style.display = 'block';
+      }
+    </script>
 
-  <script type="module">
-    import { runSimulation, FREQUENCIES } from './src/cashflow.js';
+    <script type="module">
+      import { runSimulation, FREQUENCIES } from './src/cashflow.js';
 
-    const { createApp, ref, reactive, computed, nextTick, onMounted, watch } = Vue;
+      const { createApp, ref, reactive, computed, nextTick, onMounted, watch } = Vue;
 
-    const STORAGE_KEY = 'cashflow_events';
-    const SIM_PARAMS_KEY = 'cashflow_sim_params';
-    const CURRENCIES = ['USD', 'EUR', 'GBP', 'BRL'];
+      const STORAGE_KEY = 'cashflow_events';
+      const SIM_PARAMS_KEY = 'cashflow_sim_params';
+      const CURRENCIES = ['USD', 'EUR', 'GBP', 'BRL'];
 
-    createApp({
-      setup() {
-        // Simulation settings
-        function loadSimParams() {
-          try {
-            const stored = localStorage.getItem(SIM_PARAMS_KEY);
-            if (stored) {
-              const p = JSON.parse(stored);
-              if (p.simStart) simStart.value = p.simStart;
-              if (p.simEnd) simEnd.value = p.simEnd;
-              if (p.initialBalance !== undefined) initialBalance.value = p.initialBalance;
-              if (p.portfolioCurrency) portfolioCurrency.value = p.portfolioCurrency;
-              if (p.simPeriodPreset) simPeriodPreset.value = p.simPeriodPreset;
-              if (p.eventsCollapsed !== undefined) eventsCollapsed.value = p.eventsCollapsed;
-              if (p.resultsCollapsed !== undefined) resultsCollapsed.value = p.resultsCollapsed;
-            }
-          } catch {}
-        }
-        function saveSimParams() {
-          try {
-            localStorage.setItem(SIM_PARAMS_KEY, JSON.stringify({
-              simStart: simStart.value,
-              simEnd: simEnd.value,
-              initialBalance: initialBalance.value,
-              portfolioCurrency: portfolioCurrency.value,
-              simPeriodPreset: simPeriodPreset.value,
-              eventsCollapsed: eventsCollapsed.value,
-              resultsCollapsed: resultsCollapsed.value,
-            }));
-          } catch {}
-        }
-        const simStart = ref('');
-        const simEnd = ref('');
-        const initialBalance = ref(0);
-        const simError = ref('');
-
-        // Period preset
-        const simPeriodPreset = ref('year');
-
-        function applyPeriodPreset(preset) {
-          const today = new Date();
-          const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-          let end;
-          switch (preset) {
-            case 'month':    end = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate() - 1); break;
-            case 'quarter':  end = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate() - 1); break;
-            case 'semester': end = new Date(today.getFullYear(), today.getMonth() + 6, today.getDate() - 1); break;
-            case 'year':     end = new Date(today.getFullYear(), today.getMonth() + 12, today.getDate() - 1); break;
-            default: return;
+      createApp({
+        setup() {
+          // Simulation settings
+          function loadSimParams() {
+            try {
+              const stored = localStorage.getItem(SIM_PARAMS_KEY);
+              if (stored) {
+                const p = JSON.parse(stored);
+                if (p.simStart) simStart.value = p.simStart;
+                if (p.simEnd) simEnd.value = p.simEnd;
+                if (p.initialBalance !== undefined) initialBalance.value = p.initialBalance;
+                if (p.portfolioCurrency) portfolioCurrency.value = p.portfolioCurrency;
+                if (p.simPeriodPreset) simPeriodPreset.value = p.simPeriodPreset;
+                if (p.eventsCollapsed !== undefined) eventsCollapsed.value = p.eventsCollapsed;
+                if (p.resultsCollapsed !== undefined) resultsCollapsed.value = p.resultsCollapsed;
+              }
+            } catch {}
           }
-          simStart.value = formatDate(start);
-          simEnd.value = formatDate(end);
-        }
+          function saveSimParams() {
+            try {
+              localStorage.setItem(
+                SIM_PARAMS_KEY,
+                JSON.stringify({
+                  simStart: simStart.value,
+                  simEnd: simEnd.value,
+                  initialBalance: initialBalance.value,
+                  portfolioCurrency: portfolioCurrency.value,
+                  simPeriodPreset: simPeriodPreset.value,
+                  eventsCollapsed: eventsCollapsed.value,
+                  resultsCollapsed: resultsCollapsed.value,
+                })
+              );
+            } catch {}
+          }
+          const simStart = ref('');
+          const simEnd = ref('');
+          const initialBalance = ref(0);
+          const simError = ref('');
 
-        // Expand simulation period to cover all current events
-        function expandSimPeriodForEvents() {
-          if (events.value.length === 0) return;
-          const today = new Date();
-          const todayStr = formatDate(today);
-          const oneYearLater = formatDate(new Date(today.getFullYear() + 1, today.getMonth(), today.getDate()));
-          let earliestStart = null;
-          let latestEnd = null;
-          for (const ev of events.value) {
-            if (ev.startDate) {
-              if (!earliestStart || ev.startDate < earliestStart) {
-                earliestStart = ev.startDate;
+          // Period preset
+          const simPeriodPreset = ref('year');
+
+          function applyPeriodPreset(preset) {
+            const today = new Date();
+            const start = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            let end;
+            switch (preset) {
+              case 'month':
+                end = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate() - 1);
+                break;
+              case 'quarter':
+                end = new Date(today.getFullYear(), today.getMonth() + 3, today.getDate() - 1);
+                break;
+              case 'semester':
+                end = new Date(today.getFullYear(), today.getMonth() + 6, today.getDate() - 1);
+                break;
+              case 'year':
+                end = new Date(today.getFullYear(), today.getMonth() + 12, today.getDate() - 1);
+                break;
+              default:
+                return;
+            }
+            simStart.value = formatDate(start);
+            simEnd.value = formatDate(end);
+          }
+
+          // Expand simulation period to cover all current events
+          function expandSimPeriodForEvents() {
+            if (events.value.length === 0) return;
+            const today = new Date();
+            const todayStr = formatDate(today);
+            const oneYearLater = formatDate(
+              new Date(today.getFullYear() + 1, today.getMonth(), today.getDate())
+            );
+            let earliestStart = null;
+            let latestEnd = null;
+            for (const ev of events.value) {
+              if (ev.startDate) {
+                if (!earliestStart || ev.startDate < earliestStart) {
+                  earliestStart = ev.startDate;
+                }
+              }
+              if (ev.endDate) {
+                if (!latestEnd || ev.endDate > latestEnd) {
+                  latestEnd = ev.endDate;
+                }
               }
             }
-            if (ev.endDate) {
-              if (!latestEnd || ev.endDate > latestEnd) {
-                latestEnd = ev.endDate;
+            // Expand start if needed
+            if (earliestStart && earliestStart < simStart.value) {
+              simStart.value = earliestStart;
+            }
+            // Expand end: prefer latestEnd, fallback to today+1year if events have no endDate
+            if (latestEnd && latestEnd > simEnd.value) {
+              simEnd.value = latestEnd;
+            } else if (!latestEnd || latestEnd < todayStr) {
+              simEnd.value = oneYearLater;
+            }
+            simPeriodPreset.value = 'custom';
+          }
+
+          // Theme
+          const darkMode = ref(document.documentElement.classList.contains('dark'));
+          let userToggled = false;
+          function toggleTheme() {
+            userToggled = true;
+            darkMode.value = !darkMode.value;
+            document.documentElement.classList.toggle('dark', darkMode.value);
+            // Track theme toggle in Plausible analytics
+            if (typeof plausible !== 'undefined') {
+              plausible('toggle_theme', { props: { mode: darkMode.value ? 'dark' : 'light' } });
+            }
+          }
+          if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+              if (!userToggled) {
+                darkMode.value = e.matches;
+                document.documentElement.classList.toggle('dark', e.matches);
               }
-            }
+            });
           }
-          // Expand start if needed
-          if (earliestStart && earliestStart < simStart.value) {
-            simStart.value = earliestStart;
-          }
-          // Expand end: prefer latestEnd, fallback to today+1year if events have no endDate
-          if (latestEnd && latestEnd > simEnd.value) {
-            simEnd.value = latestEnd;
-          } else if (!latestEnd || latestEnd < todayStr) {
-            simEnd.value = oneYearLater;
-          }
-          simPeriodPreset.value = 'custom';
-        }
 
-        // Theme
-        const darkMode = ref(document.documentElement.classList.contains('dark'));
-        let userToggled = false;
-        function toggleTheme() {
-          userToggled = true;
-          darkMode.value = !darkMode.value;
-          document.documentElement.classList.toggle('dark', darkMode.value);
-        }
-        if (window.matchMedia) {
-          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            if (!userToggled) {
-              darkMode.value = e.matches;
-              document.documentElement.classList.toggle('dark', e.matches);
-            }
+          // Results collapse
+          const resultsCollapsed = ref(true);
+          function toggleResults() {
+            resultsCollapsed.value = !resultsCollapsed.value;
+            saveSimParams();
+          }
+
+          // Events collapse
+          const eventsCollapsed = ref(false);
+          function toggleEvents() {
+            eventsCollapsed.value = !eventsCollapsed.value;
+            saveSimParams();
+          }
+
+          // Portfolio currency
+          const portfolioCurrency = ref('USD');
+
+          loadSimParams();
+
+          // Events — live table with inline editing
+          const events = ref(loadFromStorage() || []);
+          const editingEventIndex = ref(null); // which row is being edited
+          const editDraft = reactive({
+            name: '',
+            startDate: '',
+            endDate: '',
+            frequency: '',
+            value: 0,
+            currency: 'USD',
           });
-        }
+          const newEventDraft = reactive({
+            name: '',
+            startDate: formatDate(new Date()),
+            endDate: '',
+            frequency: '',
+            value: 0,
+            currency: 'USD',
+          });
+          const formError = reactive({ name: '', startDate: '', frequency: '' });
 
-        // Results collapse
-        const resultsCollapsed = ref(true);
-        function toggleResults() {
-          resultsCollapsed.value = !resultsCollapsed.value;
-          saveSimParams();
-        }
+          // Results
+          const results = ref([]);
+          const hasRunSimulation = ref(false);
+          const filteredResults = computed(() => {
+            const r = results.value || [];
+            return r.filter((row, i) => row.cashflow !== 0 || i === 0 || i === r.length - 1);
+          });
+          const chartData = computed(() => filteredResults.value.filter(r => r.cashflow !== 0));
 
-        // Events collapse
-        const eventsCollapsed = ref(false);
-        function toggleEvents() {
-          eventsCollapsed.value = !eventsCollapsed.value;
-          saveSimParams();
-        }
+          // CSV
+          const csvError = ref('');
+          const csvSuccess = ref('');
 
-        // Portfolio currency
-        const portfolioCurrency = ref('USD');
+          // Charts
+          const cashflowChart = ref(null);
+          const cashflowChartFullscreen = ref(null);
+          let cashflowChartInstance = null;
+          let cashflowChartFullscreenInstance = null;
 
-        loadSimParams();
+          // Chart fullscreen
+          const chartFullscreen = ref(false);
 
-        // Events — live table with inline editing
-        const events = ref(loadFromStorage() || []);
-        const editingEventIndex = ref(null); // which row is being edited
-        const editDraft = reactive({ name: '', startDate: '', endDate: '', frequency: '', value: 0, currency: 'USD' });
-        const newEventDraft = reactive({ name: '', startDate: formatDate(new Date()), endDate: '', frequency: '', value: 0, currency: 'USD' });
-        const formError = reactive({ name: '', startDate: '', frequency: '' });
-
-        // Results
-        const results = ref([]);
-        const hasRunSimulation = ref(false);
-        const filteredResults = computed(() => {
-          const r = results.value || [];
-          return r.filter((row, i) =>
-            row.cashflow !== 0 || i === 0 || i === r.length - 1
-          );
-        });
-        const chartData = computed(() =>
-          filteredResults.value.filter(r => r.cashflow !== 0)
-        );
-
-        // CSV
-        const csvError = ref('');
-        const csvSuccess = ref('');
-
-        // Charts
-        const cashflowChart = ref(null);
-        const cashflowChartFullscreen = ref(null);
-        let cashflowChartInstance = null;
-        let cashflowChartFullscreenInstance = null;
-
-        // Chart fullscreen
-        const chartFullscreen = ref(false);
-
-        // --- Auto-run on mount ---
-        onMounted(() => {
-          // New user? Apply preset to set dates relative to today
-          // Returning users already have dates loaded by loadSimParams()
-          if (!simStart.value || !simEnd.value) {
-            applyPeriodPreset(simPeriodPreset.value);
-          }
-          autoSimulate();
-          document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-              if (editingEventIndex.value !== null) {
-                cancelEditEvent();
-              } else if (chartFullscreen.value) {
-                chartFullscreen.value = false;
+          // --- Auto-run on mount ---
+          onMounted(() => {
+            // New user? Apply preset to set dates relative to today
+            // Returning users already have dates loaded by loadSimParams()
+            if (!simStart.value || !simEnd.value) {
+              applyPeriodPreset(simPeriodPreset.value);
+            }
+            autoSimulate();
+            // Track pageview in Plausible analytics
+            if (typeof plausible !== 'undefined') {
+              plausible('pageview');
+            }
+            document.addEventListener('keydown', e => {
+              if (e.key === 'Escape') {
+                if (editingEventIndex.value !== null) {
+                  cancelEditEvent();
+                } else if (chartFullscreen.value) {
+                  chartFullscreen.value = false;
+                }
               }
+            });
+          });
+
+          watch([simStart, simEnd, initialBalance], () => {
+            saveSimParams();
+            autoSimulate();
+          });
+          watch(portfolioCurrency, () => {
+            saveSimParams();
+          });
+
+          // When preset changes, update dates (skip date-watch with flag)
+          let updatingDates = false;
+          watch(simPeriodPreset, preset => {
+            if (preset !== 'custom') {
+              updatingDates = true;
+              applyPeriodPreset(preset);
+              updatingDates = false;
             }
           });
-        });
-
-        watch([simStart, simEnd, initialBalance], () => { saveSimParams(); autoSimulate(); });
-        watch(portfolioCurrency, () => { saveSimParams(); });
-
-        // When preset changes, update dates (skip date-watch with flag)
-        let updatingDates = false;
-        watch(simPeriodPreset, (preset) => {
-          if (preset !== 'custom') {
-            updatingDates = true;
-            applyPeriodPreset(preset);
-            updatingDates = false;
-          }
-        });
-        watch([simStart, simEnd], () => {
-          if (!updatingDates) simPeriodPreset.value = 'custom';
-        });
-
-        // Re-render fullscreen chart when toggling fullscreen (canvas needs to be in DOM first)
-        watch(chartFullscreen, (val) => {
-          if (val) {
-            nextTick(() => renderCharts());
-          }
-        });
-
-        // --- Persistence ---
-        function loadFromStorage() {
-          try {
-            const stored = localStorage.getItem(STORAGE_KEY);
-            return stored ? JSON.parse(stored) : null;
-          } catch { return null; }
-        }
-
-        function saveToStorage() {
-          try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(events.value));
-          } catch {}
-        }
-
-        function validateSimDates() {
-          simError.value = '';
-          if (simEnd.value && simStart.value && simEnd.value < simStart.value) {
-            simError.value = 'End date must be after start date';
-            return false;
-          }
-          if (initialBalance.value === '' || isNaN(initialBalance.value)) {
-            initialBalance.value = 0;
-          }
-          return true;
-        }
-
-        // --- Event methods (inline editing) ---
-        function validateDraft(draft) {
-          formError.name = '';
-          formError.startDate = '';
-          formError.frequency = '';
-          let valid = true;
-
-          if (!draft.name.trim()) {
-            formError.name = 'Name is required';
-            valid = false;
-          }
-          if (!draft.startDate) {
-            formError.startDate = 'Start date is required';
-            valid = false;
-          }
-          if (!draft.frequency) {
-            formError.frequency = 'Frequency is required';
-            valid = false;
-          }
-          return valid;
-        }
-
-        function startEditEvent(index) {
-          const event = events.value[index];
-          editingEventIndex.value = index;
-          editDraft.name = event.name || '';
-          editDraft.startDate = event.startDate || '';
-          editDraft.endDate = event.endDate || '';
-          editDraft.frequency = event.frequency || '';
-          editDraft.value = event.value || 0;
-          editDraft.currency = event.currency || 'USD';
-          formError.name = '';
-          formError.startDate = '';
-          formError.frequency = '';
-        }
-
-        function saveEditEvent() {
-          if (!validateDraft(editDraft)) return;
-
-          if (editingEventIndex.value !== null) {
-            events.value[editingEventIndex.value] = {
-              name: editDraft.name.trim(),
-              startDate: editDraft.startDate,
-              endDate: editDraft.endDate || '',
-              frequency: editDraft.frequency,
-              value: parseFloat(editDraft.value) || 0,
-              currency: editDraft.currency || 'USD',
-            };
-            saveToStorage();
-          }
-          cancelEditEvent();
-          autoSimulate();
-        }
-
-        function cancelEditEvent() {
-          editingEventIndex.value = null;
-          formError.name = '';
-          formError.startDate = '';
-          formError.frequency = '';
-        }
-
-        function saveNewEvent() {
-          if (!validateDraft(newEventDraft)) return;
-
-          events.value.push({
-            name: newEventDraft.name.trim(),
-            startDate: newEventDraft.startDate,
-            endDate: newEventDraft.endDate || '',
-            frequency: newEventDraft.frequency,
-            value: parseFloat(newEventDraft.value) || 0,
-            currency: newEventDraft.currency || 'USD',
+          watch([simStart, simEnd], () => {
+            if (!updatingDates) simPeriodPreset.value = 'custom';
           });
-          saveToStorage();
-          // Reset new event draft
-          newEventDraft.name = '';
-          newEventDraft.startDate = formatDate(new Date());
-          newEventDraft.endDate = '';
-          newEventDraft.frequency = '';
-          newEventDraft.value = 0;
-          newEventDraft.currency = 'USD';
-          formError.name = '';
-          formError.startDate = '';
-          formError.frequency = '';
-          autoSimulate();
-        }
 
-        function removeEvent(index) {
-          events.value.splice(index, 1);
-          if (editingEventIndex.value === index) {
+          // Re-render fullscreen chart when toggling fullscreen (canvas needs to be in DOM first)
+          watch(chartFullscreen, val => {
+            if (val) {
+              nextTick(() => renderCharts());
+            }
+          });
+
+          // --- Persistence ---
+          function loadFromStorage() {
+            try {
+              const stored = localStorage.getItem(STORAGE_KEY);
+              return stored ? JSON.parse(stored) : null;
+            } catch {
+              return null;
+            }
+          }
+
+          function saveToStorage() {
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(events.value));
+            } catch {}
+          }
+
+          function validateSimDates() {
+            simError.value = '';
+            if (simEnd.value && simStart.value && simEnd.value < simStart.value) {
+              simError.value = 'End date must be after start date';
+              return false;
+            }
+            if (initialBalance.value === '' || isNaN(initialBalance.value)) {
+              initialBalance.value = 0;
+            }
+            return true;
+          }
+
+          // --- Event methods (inline editing) ---
+          function validateDraft(draft) {
+            formError.name = '';
+            formError.startDate = '';
+            formError.frequency = '';
+            let valid = true;
+
+            if (!draft.name.trim()) {
+              formError.name = 'Name is required';
+              valid = false;
+            }
+            if (!draft.startDate) {
+              formError.startDate = 'Start date is required';
+              valid = false;
+            }
+            if (!draft.frequency) {
+              formError.frequency = 'Frequency is required';
+              valid = false;
+            }
+            return valid;
+          }
+
+          function startEditEvent(index) {
+            const event = events.value[index];
+            editingEventIndex.value = index;
+            editDraft.name = event.name || '';
+            editDraft.startDate = event.startDate || '';
+            editDraft.endDate = event.endDate || '';
+            editDraft.frequency = event.frequency || '';
+            editDraft.value = event.value || 0;
+            editDraft.currency = event.currency || 'USD';
+            formError.name = '';
+            formError.startDate = '';
+            formError.frequency = '';
+          }
+
+          function saveEditEvent() {
+            if (!validateDraft(editDraft)) return;
+
+            if (editingEventIndex.value !== null) {
+              events.value[editingEventIndex.value] = {
+                name: editDraft.name.trim(),
+                startDate: editDraft.startDate,
+                endDate: editDraft.endDate || '',
+                frequency: editDraft.frequency,
+                value: parseFloat(editDraft.value) || 0,
+                currency: editDraft.currency || 'USD',
+              };
+              saveToStorage();
+            }
             cancelEditEvent();
-          } else if (editingEventIndex.value !== null && editingEventIndex.value > index) {
-            editingEventIndex.value--;
+            autoSimulate();
           }
-          saveToStorage();
-          autoSimulate();
-        }
 
-        function clearEvents() {
-          if (confirm('Clear all events?')) {
-            events.value = [];
-            results.value = [];
-            hasRunSimulation.value = false;
-            destroyCharts();
-            localStorage.removeItem(STORAGE_KEY);
+          function cancelEditEvent() {
+            editingEventIndex.value = null;
+            formError.name = '';
+            formError.startDate = '';
+            formError.frequency = '';
           }
-        }
 
-        function autoSimulate() {
-          if (validateSimDates()) {
-            runSim();
+          function saveNewEvent() {
+            if (!validateDraft(newEventDraft)) return;
+
+            events.value.push({
+              name: newEventDraft.name.trim(),
+              startDate: newEventDraft.startDate,
+              endDate: newEventDraft.endDate || '',
+              frequency: newEventDraft.frequency,
+              value: parseFloat(newEventDraft.value) || 0,
+              currency: newEventDraft.currency || 'USD',
+            });
+            saveToStorage();
+            // Reset new event draft
+            newEventDraft.name = '';
+            newEventDraft.startDate = formatDate(new Date());
+            newEventDraft.endDate = '';
+            newEventDraft.frequency = '';
+            newEventDraft.value = 0;
+            newEventDraft.currency = 'USD';
+            formError.name = '';
+            formError.startDate = '';
+            formError.frequency = '';
+            autoSimulate();
           }
-        }
 
-        // --- CSV import ---
-        function importCSV(event) {
-          csvError.value = '';
-          csvSuccess.value = '';
-          const file = event.target.files[0];
-          if (!file) return;
+          function removeEvent(index) {
+            events.value.splice(index, 1);
+            if (editingEventIndex.value === index) {
+              cancelEditEvent();
+            } else if (editingEventIndex.value !== null && editingEventIndex.value > index) {
+              editingEventIndex.value--;
+            }
+            saveToStorage();
+            autoSimulate();
+          }
 
-          Papa.parse(file, {
-            header: true,
-            complete: (parsed) => {
-              let imported = 0;
-              let skipped = 0;
-              for (const row of parsed.data) {
-                if (!row.startDate || !row.frequency) {
-                  skipped++;
-                  continue;
+          function clearEvents() {
+            if (confirm('Clear all events?')) {
+              events.value = [];
+              results.value = [];
+              hasRunSimulation.value = false;
+              destroyCharts();
+              localStorage.removeItem(STORAGE_KEY);
+            }
+          }
+
+          function autoSimulate() {
+            if (validateSimDates()) {
+              runSim();
+            }
+          }
+
+          // --- CSV import ---
+          function importCSV(event) {
+            csvError.value = '';
+            csvSuccess.value = '';
+            const file = event.target.files[0];
+            if (!file) return;
+
+            Papa.parse(file, {
+              header: true,
+              complete: parsed => {
+                let imported = 0;
+                let skipped = 0;
+                for (const row of parsed.data) {
+                  if (!row.startDate || !row.frequency) {
+                    skipped++;
+                    continue;
+                  }
+                  const value = parseFloat(row.value);
+                  if (isNaN(value)) {
+                    skipped++;
+                    continue;
+                  }
+                  events.value.push({
+                    name: row.name || '',
+                    startDate: row.startDate,
+                    endDate: row.endDate || '',
+                    frequency: row.frequency,
+                    value: value,
+                    currency: row.currency || 'USD',
+                  });
+                  imported++;
                 }
-                const value = parseFloat(row.value);
-                if (isNaN(value)) {
-                  skipped++;
-                  continue;
+                csvSuccess.value = `Imported ${imported} events${skipped > 0 ? `, skipped ${skipped} rows` : ''}`;
+                if (imported > 0) saveToStorage();
+                event.target.value = '';
+                if (imported > 0) {
+                  // Expand simulation period to cover imported events
+                  expandSimPeriodForEvents();
+                  autoSimulate();
+                  // Track import in Plausible analytics
+                  if (typeof plausible !== 'undefined') {
+                    plausible('import_csv', { props: { events: imported } });
+                  }
                 }
-                events.value.push({
-                  name: row.name || '',
-                  startDate: row.startDate,
-                  endDate: row.endDate || row.startDate,
-                  frequency: row.frequency,
-                  value: value,
-                  currency: row.currency || 'USD',
-                });
-                imported++;
-              }
-              csvSuccess.value = `Imported ${imported} events${skipped > 0 ? `, skipped ${skipped} rows` : ''}`;
-              if (imported > 0) saveToStorage();
-              event.target.value = '';
-              if (imported > 0) {
-                // Expand simulation period to cover imported events
-                expandSimPeriodForEvents();
-                autoSimulate();
-              }
-            },
-            error: (err) => {
-              csvError.value = 'CSV error: ' + err.message;
-            },
-          });
-        }
-
-        // --- Run simulation ---
-        function runSim() {
-          simError.value = '';
-          if (!validateSimDates()) return;
-
-          hasRunSimulation.value = true;
-          results.value = runSimulation(
-            events.value,
-            initialBalance.value,
-            simStart.value,
-            simEnd.value
-          );
-          destroyCharts();
-          nextTick(() => renderCharts());
-        }
-
-        // --- Charts ---
-        function destroyCharts() {
-          if (cashflowChartInstance) {
-            cashflowChartInstance.destroy();
-            cashflowChartInstance = null;
-          }
-          if (cashflowChartFullscreenInstance) {
-            cashflowChartFullscreenInstance.destroy();
-            cashflowChartFullscreenInstance = null;
-          }
-        }
-
-        function renderCharts() {
-          destroyCharts();
-
-          if (results.value.length === 0) return;
-
-          const chartData = filteredResults.value;
-          const labels = chartData.map(r => formatDate(r.date));
-          const incomeData = chartData.map(r => r.cashflow > 0 ? r.cashflow : null);
-          const expenseData = chartData.map(r => r.cashflow < 0 ? r.cashflow : null);
-          const balanceData = chartData.map(r => r.balance);
-
-          const chartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: {
-              duration: 800,
-              easing: 'easeOutQuart',
-            },
-            plugins: {
-              legend: {
-                display: true,
-                position: 'top',
               },
-              // Draw a stronger/brighter horizontal line at y=0
-              zeroLine: {
-                afterDraw: (chart) => {
-                  const yScale = chart.scales.y;
-                  const ctx = chart.ctx;
-                  const { top, bottom } = chart.chartArea;
-                  const xLeft = chart.chartArea.left;
-                  const xRight = chart.chartArea.right;
-                  const zeroY = yScale.getPixelForValue(0);
-                  if (zeroY >= top && zeroY <= bottom) {
+              error: err => {
+                csvError.value = 'CSV error: ' + err.message;
+              },
+            });
+          }
+
+          // --- Run simulation ---
+          function runSim() {
+            simError.value = '';
+            if (!validateSimDates()) return;
+
+            hasRunSimulation.value = true;
+            results.value = runSimulation(
+              events.value,
+              initialBalance.value,
+              simStart.value,
+              simEnd.value
+            );
+            destroyCharts();
+            nextTick(() => renderCharts());
+            // Track simulation run in Plausible analytics
+            if (typeof plausible !== 'undefined') {
+              plausible('run_simulation', { props: { eventCount: events.value.length } });
+            }
+          }
+
+          // --- Charts ---
+          function destroyCharts() {
+            if (cashflowChartInstance) {
+              cashflowChartInstance.destroy();
+              cashflowChartInstance = null;
+            }
+            if (cashflowChartFullscreenInstance) {
+              cashflowChartFullscreenInstance.destroy();
+              cashflowChartFullscreenInstance = null;
+            }
+          }
+
+          function renderCharts() {
+            destroyCharts();
+
+            if (results.value.length === 0) return;
+
+            const chartData = filteredResults.value;
+            const labels = chartData.map(r => formatDate(r.date));
+            const incomeData = chartData.map(r => (r.cashflow > 0 ? r.cashflow : null));
+            const expenseData = chartData.map(r => (r.cashflow < 0 ? r.cashflow : null));
+            const balanceData = chartData.map(r => r.balance);
+
+            const chartOptions = {
+              responsive: true,
+              maintainAspectRatio: false,
+              animation: {
+                duration: 800,
+                easing: 'easeOutQuart',
+              },
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'top',
+                },
+                // Draw a stronger/brighter horizontal line at y=0
+                zeroLine: {
+                  afterDraw: chart => {
+                    const yScale = chart.scales.y;
+                    const ctx = chart.ctx;
+                    const { top, bottom } = chart.chartArea;
+                    const xLeft = chart.chartArea.left;
+                    const xRight = chart.chartArea.right;
+                    const zeroY = yScale.getPixelForValue(0);
+                    if (zeroY >= top && zeroY <= bottom) {
+                      ctx.save();
+                      ctx.strokeStyle = '#9ca3af';
+                      ctx.lineWidth = 2;
+                      ctx.setLineDash([]);
+                      ctx.beginPath();
+                      ctx.moveTo(xLeft, zeroY);
+                      ctx.lineTo(xRight, zeroY);
+                      ctx.stroke();
+                      ctx.restore();
+                    }
+                  },
+                },
+                // Draw a stronger x-axis baseline
+                xAxisLine: {
+                  afterDraw: chart => {
+                    const xScale = chart.scales.x;
+                    const ctx = chart.ctx;
+                    const { left, right, top, bottom } = chart.chartArea;
+                    const xBottomY = bottom;
                     ctx.save();
                     ctx.strokeStyle = '#9ca3af';
                     ctx.lineWidth = 2;
                     ctx.setLineDash([]);
                     ctx.beginPath();
-                    ctx.moveTo(xLeft, zeroY);
-                    ctx.lineTo(xRight, zeroY);
+                    ctx.moveTo(left, xBottomY);
+                    ctx.lineTo(right, xBottomY);
                     ctx.stroke();
                     ctx.restore();
-                  }
+                  },
                 },
               },
-              // Draw a stronger x-axis baseline
-              xAxisLine: {
-                afterDraw: (chart) => {
-                  const xScale = chart.scales.x;
-                  const ctx = chart.ctx;
-                  const { left, right, top, bottom } = chart.chartArea;
-                  const xBottomY = bottom;
-                  ctx.save();
-                  ctx.strokeStyle = '#9ca3af';
-                  ctx.lineWidth = 2;
-                  ctx.setLineDash([]);
-                  ctx.beginPath();
-                  ctx.moveTo(left, xBottomY);
-                  ctx.lineTo(right, xBottomY);
-                  ctx.stroke();
-                  ctx.restore();
+              scales: {
+                x: {
+                  type: 'category',
+                  ticks: { maxRotation: 45, minRotation: 45 },
+                  offset: true,
+                  categoryPercentage: 0.5,
+                  barPercentage: 1.0,
                 },
+                y: { beginAtZero: false },
               },
-            },
-            scales: {
-              x: {
-                type: 'category',
-                ticks: { maxRotation: 45, minRotation: 45 },
-                offset: true,
-                categoryPercentage: 0.5,
-                barPercentage: 1.0,
-              },
-              y: { beginAtZero: false },
-            },
-          };
-
-          const chartConfig = {
-            type: 'bar',
-            data: {
-              labels,
-              datasets: [
-                {
-                  label: 'Income',
-                  data: incomeData,
-                  backgroundColor: 'rgba(34, 197, 94, 1)',
-                  order: -1,
-                },
-                {
-                  label: 'Expense',
-                  data: expenseData,
-                  backgroundColor: 'rgba(239, 68, 68, 1)',
-                  order: -1,
-                },
-                {
-                  label: 'Balance',
-                  data: balanceData,
-                  type: 'line',
-                  borderColor: 'rgb(59, 130, 246)',
-                  backgroundColor: 'rgb(59, 130, 246)',
-                  fill: false,
-                  stepped: 'before',
-                  tension: 0,
-                  pointRadius: 0,
-                  pointHoverRadius: 6,
-                  pointHoverBackgroundColor: 'rgb(59, 130, 246)',
-                  order: 1,
-                },
-              ],
-            },
-            options: chartOptions,
-          };
-
-          if (cashflowChart.value) {
-            // Apply bar spacing per dataset
-            const inlineConfig = JSON.parse(JSON.stringify(chartConfig));
-            inlineConfig.data.datasets[0].barPercentage = 1.0;
-            inlineConfig.data.datasets[0].categoryPercentage = 0.5;
-            inlineConfig.data.datasets[1].barPercentage = 1.0;
-            inlineConfig.data.datasets[1].categoryPercentage = 0.5;
-            cashflowChartInstance = new Chart(cashflowChart.value, inlineConfig);
-          }
-          if (cashflowChartFullscreen.value) {
-            const isDark = darkMode.value;
-            const textColor = isDark ? '#e5e7eb' : '#374151';
-            const fullscreenOptions = JSON.parse(JSON.stringify(chartOptions));
-            fullscreenOptions.responsive = true;
-            fullscreenOptions.maintainAspectRatio = false;
-            fullscreenOptions.scales = {
-              x: {
-                type: 'category',
-                ticks: { maxRotation: 45, minRotation: 45, color: textColor },
-                offset: true,
-                categoryPercentage: 0.5,
-                barPercentage: 1.0,
-              },
-              y: { beginAtZero: false, ticks: { color: textColor } },
             };
-            fullscreenOptions.plugins = {
-              legend: {
-                display: true,
-                position: 'top',
-                labels: { color: textColor },
+
+            const chartConfig = {
+              type: 'bar',
+              data: {
+                labels,
+                datasets: [
+                  {
+                    label: 'Income',
+                    data: incomeData,
+                    backgroundColor: 'rgba(34, 197, 94, 1)',
+                    order: -1,
+                  },
+                  {
+                    label: 'Expense',
+                    data: expenseData,
+                    backgroundColor: 'rgba(239, 68, 68, 1)',
+                    order: -1,
+                  },
+                  {
+                    label: 'Balance',
+                    data: balanceData,
+                    type: 'line',
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgb(59, 130, 246)',
+                    fill: false,
+                    stepped: 'before',
+                    tension: 0,
+                    pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: 'rgb(59, 130, 246)',
+                    order: 1,
+                  },
+                ],
               },
-              zeroLine: chartOptions.plugins.zeroLine,
-              xAxisLine: chartOptions.plugins.xAxisLine,
+              options: chartOptions,
             };
-            const fullscreenConfig = JSON.parse(JSON.stringify(chartConfig));
-            // Set bar spacing per dataset for fullscreen
-            fullscreenConfig.data.datasets[0].barPercentage = 1.0;
-            fullscreenConfig.data.datasets[0].categoryPercentage = 0.5;
-            fullscreenConfig.data.datasets[1].barPercentage = 1.0;
-            fullscreenConfig.data.datasets[1].categoryPercentage = 0.5;
-            fullscreenConfig.options = fullscreenOptions;
-            cashflowChartFullscreenInstance = new Chart(cashflowChartFullscreen.value, fullscreenConfig);
+
+            if (cashflowChart.value) {
+              // Apply bar spacing per dataset
+              const inlineConfig = JSON.parse(JSON.stringify(chartConfig));
+              inlineConfig.data.datasets[0].barPercentage = 1.0;
+              inlineConfig.data.datasets[0].categoryPercentage = 0.5;
+              inlineConfig.data.datasets[1].barPercentage = 1.0;
+              inlineConfig.data.datasets[1].categoryPercentage = 0.5;
+              cashflowChartInstance = new Chart(cashflowChart.value, inlineConfig);
+            }
+            if (cashflowChartFullscreen.value) {
+              const isDark = darkMode.value;
+              const textColor = isDark ? '#e5e7eb' : '#374151';
+              const fullscreenOptions = JSON.parse(JSON.stringify(chartOptions));
+              fullscreenOptions.responsive = true;
+              fullscreenOptions.maintainAspectRatio = false;
+              fullscreenOptions.scales = {
+                x: {
+                  type: 'category',
+                  ticks: { maxRotation: 45, minRotation: 45, color: textColor },
+                  offset: true,
+                  categoryPercentage: 0.5,
+                  barPercentage: 1.0,
+                },
+                y: { beginAtZero: false, ticks: { color: textColor } },
+              };
+              fullscreenOptions.plugins = {
+                legend: {
+                  display: true,
+                  position: 'top',
+                  labels: { color: textColor },
+                },
+                zeroLine: chartOptions.plugins.zeroLine,
+                xAxisLine: chartOptions.plugins.xAxisLine,
+              };
+              const fullscreenConfig = JSON.parse(JSON.stringify(chartConfig));
+              // Set bar spacing per dataset for fullscreen
+              fullscreenConfig.data.datasets[0].barPercentage = 1.0;
+              fullscreenConfig.data.datasets[0].categoryPercentage = 0.5;
+              fullscreenConfig.data.datasets[1].barPercentage = 1.0;
+              fullscreenConfig.data.datasets[1].categoryPercentage = 0.5;
+              fullscreenConfig.options = fullscreenOptions;
+              cashflowChartFullscreenInstance = new Chart(
+                cashflowChartFullscreen.value,
+                fullscreenConfig
+              );
+            }
           }
-        }
 
-        // --- Export Events CSV ---
-        function exportEventsCSV() {
-          const escape = (v) => {
-            const s = String(v ?? '');
-            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-              return '"' + s.replace(/"/g, '""') + '"';
+          // --- Export Events CSV ---
+          function exportEventsCSV() {
+            const escape = v => {
+              const s = String(v ?? '');
+              if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+                return '"' + s.replace(/"/g, '""') + '"';
+              }
+              return s;
+            };
+            const rows = [
+              ['name', 'startDate', 'endDate', 'frequency', 'value', 'currency'],
+              ...events.value.map(e => [
+                escape(e.name || ''),
+                e.startDate || '',
+                e.endDate || '',
+                e.frequency || '',
+                (e.value || 0).toFixed(2),
+                e.currency || 'USD',
+              ]),
+            ];
+            const csv = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cashflow-events.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            // Track export in Plausible analytics
+            if (typeof plausible !== 'undefined') {
+              plausible('export_events_csv', { props: { eventCount: events.value.length } });
             }
-            return s;
-          };
-          const rows = [
-            ['name', 'startDate', 'endDate', 'frequency', 'value', 'currency'],
-            ...events.value.map(e => [
-              escape(e.name || ''),
-              e.startDate || '',
-              e.endDate || '',
-              e.frequency || '',
-              (e.value || 0).toFixed(2),
-              e.currency || 'USD',
-            ]),
-          ];
-          const csv = rows.map(r => r.join(',')).join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'cashflow-events.csv';
-          a.click();
-          URL.revokeObjectURL(url);
-        }
+          }
 
-        // --- Export Results CSV ---
-        function exportResultsCSV() {
-          const escape = (v) => {
-            const s = String(v ?? '');
-            if (s.includes(',') || s.includes('"') || s.includes('\n')) {
-              return '"' + s.replace(/"/g, '""') + '"';
+          // --- Export Results CSV ---
+          function exportResultsCSV() {
+            const escape = v => {
+              const s = String(v ?? '');
+              if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+                return '"' + s.replace(/"/g, '""') + '"';
+              }
+              return s;
+            };
+            const rows = [
+              ['Date', 'Cashflow', 'Balance', 'Items'],
+              ...filteredResults.value.map(r => [
+                escape(formatDate(r.date)),
+                r.cashflow.toFixed(2),
+                r.balance.toFixed(2),
+                escape(r.items.join('; ')),
+              ]),
+            ];
+            const csv = rows.map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cashflow-results.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+            // Track export in Plausible analytics
+            if (typeof plausible !== 'undefined') {
+              plausible('export_results_csv', {
+                props: { rowCount: filteredResults.value.length },
+              });
             }
-            return s;
+          }
+
+          // --- Utilities ---
+          function formatDate(date) {
+            if (!date) return '';
+            const d = date instanceof Date ? date : new Date(date);
+            if (isNaN(d.getTime())) return '';
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+          }
+
+          return {
+            simStart,
+            simEnd,
+            initialBalance,
+            simError,
+            simPeriodPreset,
+            events,
+            editingEventIndex,
+            editDraft,
+            newEventDraft,
+            formError,
+            results,
+            hasRunSimulation,
+            filteredResults,
+            chartData,
+            csvError,
+            csvSuccess,
+            cashflowChart,
+            cashflowChartFullscreen,
+            startEditEvent,
+            saveEditEvent,
+            cancelEditEvent,
+            saveNewEvent,
+            removeEvent,
+            clearEvents,
+            importCSV,
+            runSimulation: runSim,
+            exportEventsCSV,
+            exportResultsCSV,
+            formatDate,
+            darkMode,
+            toggleTheme,
+            resultsCollapsed,
+            toggleResults,
+            eventsCollapsed,
+            toggleEvents,
+            portfolioCurrency,
+            chartFullscreen,
           };
-          const rows = [
-            ['Date', 'Cashflow', 'Balance', 'Items'],
-            ...filteredResults.value.map(r => [
-              escape(formatDate(r.date)),
-              r.cashflow.toFixed(2),
-              r.balance.toFixed(2),
-              escape(r.items.join('; ')),
-            ]),
-          ];
-          const csv = rows.map(r => r.join(',')).join('\n');
-          const blob = new Blob([csv], { type: 'text/csv' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'cashflow-results.csv';
-          a.click();
-          URL.revokeObjectURL(url);
-        }
-
-        // --- Utilities ---
-        function formatDate(date) {
-          if (!date) return '';
-          const d = date instanceof Date ? date : new Date(date);
-          if (isNaN(d.getTime())) return '';
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          const day = String(d.getDate()).padStart(2, '0');
-          return `${y}-${m}-${day}`;
-        }
-
-        return {
-          simStart, simEnd, initialBalance, simError, simPeriodPreset,
-          events, editingEventIndex, editDraft, newEventDraft, formError,
-          results, hasRunSimulation, filteredResults, chartData,
-          csvError, csvSuccess,
-          cashflowChart, cashflowChartFullscreen,
-          startEditEvent, saveEditEvent, cancelEditEvent, saveNewEvent, removeEvent, clearEvents,
-          importCSV, runSimulation: runSim, exportEventsCSV, exportResultsCSV,
-          formatDate,
-          darkMode, toggleTheme,
-          resultsCollapsed, toggleResults,
-          eventsCollapsed, toggleEvents,
-          portfolioCurrency,
-          chartFullscreen,
-        };
-      },
-    }).mount('#app');
-  </script>
-</body>
+        },
+      }).mount('#app');
+    </script>
+  </body>
 </html>

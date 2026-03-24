@@ -32,6 +32,7 @@ export default [
         isFinite: 'readonly',
         parseInt: 'readonly',
         parseFloat: 'readonly',
+        process: 'readonly',
       },
     },
     rules: {

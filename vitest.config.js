@@ -8,6 +8,12 @@ export default defineConfig({
     reporters: ['verbose'],
     // Test isolation - run tests in parallel (default)
     pool: 'forks',
+    // Flaky test detection - retry failed tests in CI
+    retry: process.env.CI ? 2 : 0,
+    // Only run project test files (not node_modules)
+    include: ['src/**/*.test.js'],
+    // Exclude integration tests (run with Playwright, not Vitest)
+    exclude: ['tests/integration/**'],
   },
   coverage: {
     provider: 'v8',
