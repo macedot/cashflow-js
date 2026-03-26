@@ -34,7 +34,7 @@ function getNextMonthYear(currentMonth, currentYear, monthsToAdd) {
  * @returns {boolean}
  */
 function isLeapYear(year) {
-  return new Date(year, 1, 29).getMonth() === 1;
+  return new Date(Date.UTC(year, 1, 29)).getUTCMonth() === 1;
 }
 
 /**
@@ -65,7 +65,7 @@ export function isValidDate(d) {
 
 /**
  * Parse a date string or return as-is if already a Date
- * Uses local time to avoid timezone shifts.
+ * Uses UTC to avoid timezone shifts when constructing from YYYY-MM-DD.
  * @param {Date|string} dateStr
  * @returns {Date}
  */
@@ -73,19 +73,19 @@ export function parseDate(dateStr) {
   if (dateStr instanceof Date) {
     return new Date(dateStr);
   }
-  // Handle YYYY-MM-DD format specially to avoid UTC timezone issues
+  // Handle YYYY-MM-DD format: use UTC to avoid local midnight rollover
   if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
     const parts = dateStr.split('-').map(Number);
     const y = /** @type {number} */ (parts[0]);
     const m = /** @type {number} */ (parts[1]);
     const d = /** @type {number} */ (parts[2]);
-    return new Date(y, m - 1, d); // Local time
+    return new Date(Date.UTC(y, m - 1, d));
   }
   return new Date(dateStr);
 }
 
 /**
- * Add a time period to a date (in local time)
+ * Add a time period to a date (using UTC to avoid timezone shifts)
  * @param {Date} date
  * @param {string} frequency
  * @returns {Date}
@@ -97,37 +97,43 @@ function addPeriod(date, frequency) {
     );
   }
 
-  const year = date.getFullYear();
-  const month = date.getMonth();
-  const day = date.getDate();
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  const day = date.getUTCDate();
 
   switch (frequency) {
-    case FREQUENCIES.DAILY:
-      return new Date(year, month, day + 1);
-    case FREQUENCIES.WEEKLY:
-      return new Date(year, month, day + 7);
+    case FREQUENCIES.DAILY: {
+      const d = new Date(date);
+      d.setUTCDate(day + 1);
+      return d;
+    }
+    case FREQUENCIES.WEEKLY: {
+      const d = new Date(date);
+      d.setUTCDate(day + 7);
+      return d;
+    }
     case FREQUENCIES.MONTHLY: {
       const { year: nextYear, month: nextMonth } = getNextMonthYear(month, year, 1);
-      const daysInNextMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+      const daysInNextMonth = new Date(Date.UTC(nextYear, nextMonth + 1, 0)).getUTCDate();
       const nextDay = Math.min(day, daysInNextMonth);
-      return new Date(nextYear, nextMonth, nextDay);
+      return new Date(Date.UTC(nextYear, nextMonth, nextDay));
     }
     case FREQUENCIES.QUARTERLY: {
       const { year: nextYear, month: nextMonth } = getNextMonthYear(month, year, 3);
-      const daysInNextMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+      const daysInNextMonth = new Date(Date.UTC(nextYear, nextMonth + 1, 0)).getUTCDate();
       const nextDay = Math.min(day, daysInNextMonth);
-      return new Date(nextYear, nextMonth, nextDay);
+      return new Date(Date.UTC(nextYear, nextMonth, nextDay));
     }
     case FREQUENCIES.SEMI_ANNUAL: {
       const { year: nextYear, month: nextMonth } = getNextMonthYear(month, year, 6);
-      const daysInNextMonth = new Date(nextYear, nextMonth + 1, 0).getDate();
+      const daysInNextMonth = new Date(Date.UTC(nextYear, nextMonth + 1, 0)).getUTCDate();
       const nextDay = Math.min(day, daysInNextMonth);
-      return new Date(nextYear, nextMonth, nextDay);
+      return new Date(Date.UTC(nextYear, nextMonth, nextDay));
     }
     case FREQUENCIES.ANNUAL: {
       const nextYear = year + 1;
       const nextDay = day === 29 && !isLeapYear(nextYear) ? 28 : day;
-      return new Date(nextYear, month, nextDay);
+      return new Date(Date.UTC(nextYear, month, nextDay));
     }
     default:
       throw new Error(`Unhandled frequency: ${frequency}`);
@@ -174,7 +180,7 @@ function getEffectiveEnd(eventEnd, simulationEnd) {
  * @returns {Date}
  */
 function findFirstOccurrence(startDate, targetStart, frequency) {
-  let currentDate = new Date(startDate);
+  let currentDate = parseDate(startDate);
   while (currentDate < targetStart) {
     currentDate = addPeriod(currentDate, frequency);
   }
@@ -245,7 +251,7 @@ export function runSimulation(events, initialBalance, simStart, simEnd) {
   for (const event of events) {
     const eventCashflows = generateEventCashflows(event, start, end);
     for (const cf of eventCashflows) {
-      const dateKey = `${cf.date.getFullYear()}-${cf.date.getMonth()}-${cf.date.getDate()}`;
+      const dateKey = `${cf.date.getUTCFullYear()}-${cf.date.getUTCMonth()}-${cf.date.getUTCDate()}`;
       if (!cashflowByDate.has(dateKey)) {
         cashflowByDate.set(dateKey, { date: cf.date, cashflow: 0, items: [] });
       }
@@ -258,11 +264,11 @@ export function runSimulation(events, initialBalance, simStart, simEnd) {
   // Build continuous daily results from simStart to simEnd
   const results = [];
   let balance = initialBalance;
-  const current = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-  const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+  const current = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()));
+  const endDay = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()));
 
   while (current <= endDay) {
-    const dateKey = `${current.getFullYear()}-${current.getMonth()}-${current.getDate()}`;
+    const dateKey = `${current.getUTCFullYear()}-${current.getUTCMonth()}-${current.getUTCDate()}`;
     const entry = cashflowByDate.get(dateKey);
 
     if (entry) {
@@ -282,7 +288,7 @@ export function runSimulation(events, initialBalance, simStart, simEnd) {
       });
     }
 
-    current.setDate(current.getDate() + 1);
+    current.setUTCDate(current.getUTCDate() + 1);
   }
 
   return results;

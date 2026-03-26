@@ -6,10 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install          # install dev dependencies (vitest, eslint, typescript)
-npm test             # run all tests once
-npm run test:watch   # run tests in watch mode
-npm run lint         # run ESLint on src/*.js
-npm run typecheck    # run TypeScript type checker on src/*.js
+npm test               # run all tests once
+npm run test:watch     # run tests in watch mode
+npm run test:coverage  # run tests with coverage report
+npm run test:e2e       # run Playwright E2E tests
+npm run lint           # run ESLint on src/*.js
+npm run lint:fix       # auto-fix ESLint errors
+npm run format         # format code with Prettier
+npm run typecheck      # run TypeScript type checker on src/*.js
 python3 -m http.server 8080  # serve app (ES modules require HTTP server)
 ```
 
@@ -29,6 +33,9 @@ Open http://localhost:8080 in your browser. Direct file:// access works too but 
 - `src/cashflow.js` — pure simulation engine. Zero dependencies. Only uses standard JS built-ins (Date, Math, Array, Map). Exports: `runSimulation`, `generateEventCashflows`, `parseDate`, `addPeriod`, `isValidDate`, `FREQUENCIES`. Can be imported by any JS project.
 - `src/style.css` — custom CSS only. CSS custom properties for theming, dark mode overrides, chart-container, error messages, toggle icons.
 - `src/cashflow.test.js` — Vitest unit tests (30 tests). Tests run in Node environment.
+- `tests/integration/` — Playwright E2E tests
+
+**Coverage thresholds**: statements 80%, branches 80%, functions 80%, lines 80%.
 
 ### Dark mode implementation
 Tailwind CDN v2.x does NOT support `dark:` variants. Dark mode is implemented via:
