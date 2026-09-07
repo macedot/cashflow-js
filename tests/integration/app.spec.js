@@ -94,6 +94,75 @@ test.describe('Cashflow Simulator App', () => {
     await expect(page.locator('text=Import CSV')).toBeVisible();
   });
 
+  test('chart folds and unfolds, default unfolded', async ({ page }) => {
+    await page.fill('input[placeholder="Event name"]', 'Salary');
+    await page.selectOption('select:has(option[value="monthly"])', 'monthly');
+    await page.fill('input[placeholder="0.00"]', '1000');
+    await page.click('button[title="Add event"]');
+    await page.waitForTimeout(500);
+
+    const chartSection = page
+      .locator('div.bg-white:has(h2:has-text("Cashflow & Balance Over Time"))')
+      .first();
+    const foldButton = chartSection.locator('button:has(.toggle-icon)');
+    const chartContainer = chartSection.locator('.chart-container:not(.flex-1)');
+
+    // Default is unfolded
+    await expect(chartContainer).toBeVisible();
+
+    // Fold hides the chart
+    await foldButton.click();
+    await expect(chartContainer).toBeHidden();
+
+    // Unfold brings it back and the canvas is re-rendered by Chart.js
+    await foldButton.click();
+    await expect(chartContainer).toBeVisible();
+    await expect(chartContainer.locator('canvas')).toBeVisible();
+    const rendered = await chartContainer
+      .locator('canvas')
+      .evaluate(el => ({ w: el.width, h: el.height }));
+    expect(rendered.w).toBeGreaterThan(0);
+    expect(rendered.h).toBeGreaterThan(0);
+  });
+
+  test('chart fullscreen toggle renders the chart and opens/closes overlay', async ({ page }) => {
+    await page.fill('input[placeholder="Event name"]', 'Salary');
+    await page.selectOption('select:has(option[value="monthly"])', 'monthly');
+    await page.fill('input[placeholder="0.00"]', '1000');
+    await page.click('button[title="Add event"]');
+    await page.waitForTimeout(500);
+
+    const chartSection = page
+      .locator('div.bg-white:has(h2:has-text("Cashflow & Balance Over Time"))')
+      .first();
+    await chartSection.getByRole('button', { name: '⛶' }).click();
+
+    const overlay = page.locator('.fixed.inset-0.z-50:has-text("Cashflow & Balance Over Time")');
+    await expect(overlay).toBeVisible();
+
+    // Regression: fullscreen canvas must actually be rendered by Chart.js
+    const fsCanvas = overlay.locator('canvas');
+    await expect(fsCanvas).toBeVisible();
+    const fsState = await fsCanvas.evaluate(el => ({
+      w: el.width,
+      h: el.height,
+      hasChart: Boolean(window.Chart && Chart.getChart(el)),
+    }));
+    expect(fsState.w).toBeGreaterThan(100);
+    expect(fsState.h).toBeGreaterThan(100);
+    expect(fsState.hasChart).toBe(true);
+
+    // Close via ✕ button
+    await overlay.getByRole('button', { name: '✕' }).click();
+    await expect(overlay).toBeHidden();
+
+    // Reopen and close via Escape
+    await chartSection.getByRole('button', { name: '⛶' }).click();
+    await expect(overlay).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(overlay).toBeHidden();
+  });
+
   test('chart tooltip is configured to show balance alongside income/expense', async ({ page }) => {
     // Clear localStorage so chart renders from a known empty state
     await page.evaluate(() => localStorage.clear());

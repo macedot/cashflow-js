@@ -57,7 +57,7 @@
           </p>
         </div>
         <div class="flex items-center gap-3 pr-40">
-          <span class="text-sm text-blue-200">v0.6.6</span>
+          <span class="text-sm text-blue-200">v0.6.7</span>
           <button
             @click="toggleTheme"
             class="text-white hover:text-blue-200 text-2xl"
@@ -484,9 +484,20 @@
         <!-- Combined Chart -->
         <div v-if="results.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-4">
           <div class="flex justify-between items-center mb-3">
-            <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              Cashflow & Balance Over Time
-            </h2>
+            <div class="flex items-center gap-2">
+              <button
+                @click="toggleChart"
+                class="text-black dark:text-white hover:text-gray-600"
+              >
+                <span
+                  :class="chartCollapsed ? 'fold' : ''"
+                  class="toggle-icon inline-block w-4 text-center"
+                ></span>
+              </button>
+              <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">
+                Cashflow & Balance Over Time
+              </h2>
+            </div>
             <div class="flex gap-2">
               <button
                 @click="chartFullscreen = !chartFullscreen"
@@ -502,7 +513,7 @@
               </button>
             </div>
           </div>
-          <div class="chart-container">
+          <div v-show="!chartCollapsed" class="chart-container">
             <canvas ref="cashflowChart"></canvas>
           </div>
         </div>
@@ -730,6 +741,7 @@
                 if (p.simPeriodPreset) simPeriodPreset.value = p.simPeriodPreset;
                 if (p.eventsCollapsed !== undefined) eventsCollapsed.value = p.eventsCollapsed;
                 if (p.resultsCollapsed !== undefined) resultsCollapsed.value = p.resultsCollapsed;
+                if (p.chartCollapsed !== undefined) chartCollapsed.value = p.chartCollapsed;
               }
             } catch {}
           }
@@ -745,6 +757,7 @@
                   simPeriodPreset: simPeriodPreset.value,
                   eventsCollapsed: eventsCollapsed.value,
                   resultsCollapsed: resultsCollapsed.value,
+                  chartCollapsed: chartCollapsed.value,
                 })
               );
             } catch {}
@@ -878,6 +891,13 @@
             saveSimParams();
           }
 
+          // Chart collapse (default unfolded)
+          const chartCollapsed = ref(false);
+          function toggleChart() {
+            chartCollapsed.value = !chartCollapsed.value;
+            saveSimParams();
+          }
+
           /**
            * Portfolio currency — the display/reporting currency for the simulation.
            * Selected via dropdown (USD, EUR, GBP, BRL). Persisted in localStorage.
@@ -990,6 +1010,13 @@
           // Re-render fullscreen chart when toggling fullscreen (canvas needs to be in DOM first)
           watch(chartFullscreen, val => {
             if (val) {
+              nextTick(() => renderCharts());
+            }
+          });
+
+          // Re-render inline chart when unfolding — it may have been created at 0×0 while hidden
+          watch(chartCollapsed, val => {
+            if (!val) {
               nextTick(() => renderCharts());
             }
           });
@@ -1567,10 +1594,11 @@
                 },
                 y: { beginAtZero: false, ticks: { color: textColor } },
               };
+              // Keep the cloned tooltip config — only restyle the legend for fullscreen
               fullscreenOptions.plugins = {
+                ...fullscreenOptions.plugins,
                 legend: {
-                  display: true,
-                  position: 'top',
+                  ...fullscreenOptions.plugins.legend,
                   labels: { color: textColor },
                 },
               };
@@ -1739,6 +1767,8 @@
             toggleResults,
             eventsCollapsed,
             toggleEvents,
+            chartCollapsed,
+            toggleChart,
             portfolioCurrency,
             chartFullscreen,
             resultsFullscreen,
